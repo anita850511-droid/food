@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e58a45">
+  <title>食物重量記錄</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      background:
+        linear-gradient(rgba(255, 247, 238, .9), rgba(255, 247, 238, .9)),
+        url("images.jpg");
+      background-size: cover;
+      background-position: center;
+      color: #222;
+    }
+
+    .app {
+      max-width: 520px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 20px 60px rgba(57, 37, 18, .12);
+    }
+
+    h1 {
+      margin: 8px 0 4px;
+      font-size: 26px;
+      text-align: center;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: #777;
+      font-size: 14px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .form-card,
+    .list-card,
+    .quick-card,
+    .copy-card,
+    .report-card {
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid #eeeeee;
+      border-radius: 14px;
+      background: #f9fafc;
+    }
+
+    .input-row,
+    .quick-row {
+      display: grid;
+      grid-template-columns: 1fr 100px;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      color: #666;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      outline: none;
+      background: white;
+      font-size: 16px;
+    }
+
+    textarea {
+      height: 84px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .report-output {
+      height: 260px;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #e58a45;
+      box-shadow: 0 0 0 3px rgba(229, 138, 69, .15);
+    }
+
+    button {
+      width: 100%;
+      min-height: 44px;
+      padding: 13px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: #e58a45;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(.98);
+    }
+
+    .secondary {
+      background: #f1e2d4;
+      color: #8a4b22;
+    }
+
+    .hint {
+      margin-top: 8px;
+      color: #888;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .empty {
+      padding: 20px 0;
+      color: #999;
+      text-align: center;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 14px;
+      border: 1px solid #eeeeee;
+      border-radius: 12px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .item-name {
+      margin-bottom: 4px;
+      font-size: 17px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .item-weight {
+      color: #666;
+      font-size: 15px;
+    }
+
+    .item-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .small-btn {
+      width: auto;
+      min-width: 74px;
+      height: 40px;
+      min-height: 40px;
+      padding: 0 12px;
+      border-radius: 10px;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .delete {
+      background: #f06464;
+    }
+
+    .footer-actions,
+    .report-actions,
+    .meal-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .meal-actions {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        padding: 14px;
+      }
+
+      .input-row,
+      .quick-row,
+      .two-col,
+      .meal-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>食物重量記錄</h1>
+    <p class="subtitle">先照原本方式記錄當餐食物重量，再一鍵整理成體重日誌格式。</p>
+
+    <section class="form-card">
+      <div class="input-row">
+        <input id="itemName" type="text" placeholder="食物名稱，例如雞柳條">
+        <input id="itemWeight" type="number" inputmode="decimal" placeholder="重量g" min="0" step="0.1">
+      </div>
+      <button type="button" onclick="addItem()">新增食物</button>
+      <div class="hint">例如輸入「花枝漿」和「234.8」，會記成花枝漿 234.8g。</div>
+    </section>
+
+    <section class="quick-card">
+      <div class="quick-row">
+        <select id="quickItemSelect">
+          <option value="">選擇食物</option>
+        </select>
+        <input id="quickWeight" type="number" inputmode="decimal" placeholder="+重量g" step="0.1">
+      </div>
+      <button type="button" onclick="addQuickWeight()">快速調整重量</button>
+      <div class="hint">可輸入 20、10.5 或 -20，正數增加、負數減少。</div>
+    </section>
+
+    <section class="list-card">
+      <div id="itemList"></div>
+      <div class="footer-actions">
+        <button type="button" class="delete" onclick="clearAll()">清空全部</button>
+      </div>
+      <div class="hint">點食物卡片也可以輸入要加減的重量。</div>
+    </section>
+
+    <section class="copy-card">
+      <div class="hint">當餐食物整理結果</div>
+      <textarea id="resultText" readonly placeholder="新增食物後會自動產生，例如：雞柳條375g、花枝漿234.8g"></textarea>
+      <button type="button" onclick="copyText()">複製當餐食物</button>
+    </section>
+
+    <section class="report-card">
+      <h2>體重日誌產生器</h2>
+
+      <div class="two-col">
+        <div class="field">
+          <label for="reportDate">日期</label>
+          <input id="reportDate" type="date" data-report-field>
+        </div>
+        <div class="field">
+          <label for="bodyWeight">體重 kg</label>
+          <input id="bodyWeight" type="number" inputmode="decimal" step="0.1" placeholder="61.1" data-report-field>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label for="measureTime">測量時間</label>
+          <input id="measureTime" type="time" data-report-field>
+        </div>
+        <div class="field">
+          <label for="bowel">排便</label>
+          <select id="bowel" data-report-field>
+            <option>無</option>
+            <option>有</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="lateMeal">前晚有無進食</label>
+        <select id="lateMeal" data-report-field>
+          <option>有</option>
+          <option>無</option>
+        </select>
+      </div>
+
+      <div class="meal-actions">
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('breakfast')">套早餐</button>
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('lunch')">套午餐</button>
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('dinner')">套晚餐</button>
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('snack')">套點心</button>
+      </div>
+      <div class="hint">上方食物清單會套成「雞柳條375g、花枝漿234.8g」這種格式。</div>
+
+      <div class="field">
+        <label for="breakfast">早餐</label>
+        <textarea id="breakfast" data-report-field>無</textarea>
+      </div>
+      <div class="field">
+        <label for="lunch">午餐</label>
+        <textarea id="lunch" data-report-field>無</textarea>
+      </div>
+      <div class="field">
+        <label for="dinner">晚餐</label>
+        <textarea id="dinner" data-report-field>無</textarea>
+      </div>
+      <div class="field">
+        <label for="fruit">水果</label>
+        <textarea id="fruit" data-report-field>無</textarea>
+      </div>
+      <div class="field">
+        <label for="snack">點心</label>
+        <textarea id="snack" data-report-field>無</textarea>
+      </div>
+      <div class="field">
+        <label for="otherFood">其他</label>
+        <textarea id="otherFood" data-report-field>無</textarea>
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label for="water">純水</label>
+          <input id="water" type="text" placeholder="2000ml" data-report-field>
+        </div>
+        <div class="field">
+          <label for="tea">無糖茶</label>
+          <input id="tea" type="text" value="無" data-report-field>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="bodyNote">備註</label>
+        <textarea id="bodyNote" placeholder="身體感覺、心情、運動量、特殊狀況等" data-report-field></textarea>
+      </div>
+
+      <div class="hint">完整日誌</div>
+      <textarea id="reportText" class="report-output" readonly></textarea>
+      <div class="report-actions">
+        <button type="button" onclick="copyReportText()">複製完整日誌</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "foodItems";
+    const REPORT_STORAGE_KEY = "weightReportFields";
+
+    let items = loadItems();
+
+    function loadItems() {
+      try {
+        const savedItems = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return Array.isArray(savedItems) ? savedItems : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function getRequiredElement(id) {
+      const element = document.getElementById(id);
+      if (!element) {
+        throw new Error(`找不到元素 #${id}`);
+      }
+      return element;
+    }
+
+    function normalizeWeight(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) {
+        return NaN;
+      }
+      return Math.round(number * 10) / 10;
+    }
+
+    function formatWeight(value) {
+      const number = normalizeWeight(value);
+      if (!Number.isFinite(number)) {
+        return "0";
+      }
+      return Number.isInteger(number) ? String(number) : number.toFixed(1);
+    }
+
+    function renderSelectOptions() {
+      const quickItemSelect = getRequiredElement("quickItemSelect");
+      quickItemSelect.innerHTML = "";
+
+      if (items.length === 0) {
+        quickItemSelect.innerHTML = '<option value="">選擇食物</option>';
+        return;
+      }
+
+      items.forEach((item, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = `${item.name}（${formatWeight(item.weight)}g）`;
+        quickItemSelect.appendChild(option);
+      });
+    }
+
+    function renderItems() {
+      const itemList = getRequiredElement("itemList");
+      itemList.innerHTML = "";
+
+      if (items.length === 0) {
+        itemList.innerHTML = '<div class="empty">目前沒有食物</div>';
+      }
+
+      items.forEach((item, index) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "item";
+        itemDiv.onclick = function () {
+          changeWeightByInput(index);
+        };
+
+        itemDiv.innerHTML = `
+          <div>
+            <div class="item-name">${escapeHtml(item.name)}</div>
+            <div class="item-weight">${formatWeight(item.weight)} g</div>
+          </div>
+          <div class="item-actions" onclick="event.stopPropagation()">
+            <button type="button" class="small-btn delete" onclick="deleteItem(${index})">刪除</button>
+          </div>
+        `;
+
+        itemList.appendChild(itemDiv);
+      });
+
+      renderSelectOptions();
+      updateResultText();
+      saveItems();
+      updateReportText();
+    }
+
+    function addItem() {
+      const nameInput = getRequiredElement("itemName");
+      const weightInput = getRequiredElement("itemWeight");
+
+      const name = nameInput.value.trim();
+      const weight = normalizeWeight(weightInput.value);
+
+      if (name === "") {
+        alert("請輸入食物名稱");
+        return;
+      }
+
+      if (!Number.isFinite(weight) || weight <= 0) {
+        alert("請輸入大於 0 的重量");
+        return;
+      }
+
+      const existingItem = items.find(item => item.name === name);
+
+      if (existingItem) {
+        existingItem.weight = normalizeWeight(Number(existingItem.weight) + weight);
+      } else {
+        items.push({ name: name, weight: weight });
+      }
+
+      nameInput.value = "";
+      weightInput.value = "";
+      nameInput.focus();
+      renderItems();
+    }
+
+    function changeWeight(index, amount) {
+      if (!items[index]) {
+        return;
+      }
+
+      items[index].weight = normalizeWeight(Number(items[index].weight) + Number(amount));
+
+      if (items[index].weight < 0) {
+        items[index].weight = 0;
+      }
+
+      renderItems();
+    }
+
+    function changeWeightByInput(index) {
+      if (!items[index]) {
+        return;
+      }
+
+      const amount = normalizeWeight(prompt(`調整「${items[index].name}」的重量(g)\n例如輸入 10.5 或 -20`));
+
+      if (!Number.isFinite(amount) || amount === 0) {
+        return;
+      }
+
+      changeWeight(index, amount);
+    }
+
+    function addQuickWeight() {
+      const quickItemSelect = getRequiredElement("quickItemSelect");
+      const quickWeightInput = getRequiredElement("quickWeight");
+
+      const index = Number(quickItemSelect.value);
+      const amount = normalizeWeight(quickWeightInput.value);
+
+      if (!items[index]) {
+        alert("請先選擇食物");
+        return;
+      }
+
+      if (!Number.isFinite(amount) || amount === 0) {
+        alert("請輸入要調整的重量，例如 20、10.5 或 -20");
+        return;
+      }
+
+      changeWeight(index, amount);
+      quickWeightInput.value = "";
+      quickWeightInput.focus();
+    }
+
+    function deleteItem(index) {
+      if (!items[index]) {
+        return;
+      }
+
+      items.splice(index, 1);
+      renderItems();
+    }
+
+    function clearAll() {
+      items = [];
+      localStorage.removeItem(STORAGE_KEY);
+      renderItems();
+    }
+
+    function getFoodResultText() {
+      return items.map(item => `${item.name}${formatWeight(item.weight)}g`).join("、");
+    }
+
+    function updateResultText() {
+      getRequiredElement("resultText").value = getFoodResultText();
+    }
+
+    async function copyText() {
+      const textarea = getRequiredElement("resultText");
+
+      if (textarea.value.trim() === "") {
+        alert("目前沒有內容可以複製");
+        return;
+      }
+
+      await copyToClipboard(textarea.value, textarea);
+    }
+
+    function getFieldValue(id, fallback = "無") {
+      const value = getRequiredElement(id).value.trim();
+      return value === "" ? fallback : value;
+    }
+
+    function getFormattedDate() {
+      const value = getFieldValue("reportDate", "");
+      const date = value ? new Date(`${value}T00:00:00`) : new Date();
+      const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${month}/${day}（${weekdays[date.getDay()]}）`;
+    }
+
+    function normalizeTimeText(value) {
+      return value ? value.replace(":", "：") : "無";
+    }
+
+    function buildReportText() {
+      const weight = getFieldValue("bodyWeight", "無");
+      const time = normalizeTimeText(getFieldValue("measureTime", ""));
+      return [
+        "【體重記錄】",
+        `日期：${getFormattedDate()}`,
+        `體重：${weight === "無" ? "無" : `${weight} kg`}`,
+        `測量時間：${time}`,
+        `排便：${getFieldValue("bowel")}`,
+        `前晚有無進食：${getFieldValue("lateMeal")}`,
+        "【飲食記錄】都是熟重",
+        `早餐：${getFieldValue("breakfast")}`,
+        `午餐：${getFieldValue("lunch")}`,
+        `晚餐：${getFieldValue("dinner")}`,
+        `水果：${getFieldValue("fruit")}`,
+        `點心：${getFieldValue("snack")}`,
+        `其他：${getFieldValue("otherFood")}`,
+        "【喝水量】",
+        `純水：${getFieldValue("water")}`,
+        `無糖茶：${getFieldValue("tea")}`,
+        "",
+        "【備註】",
+        `身體感覺、心情、運動量、特殊狀況等：${getFieldValue("bodyNote")}`
+      ].join("\n");
+    }
+
+    function updateReportText() {
+      const reportText = document.getElementById("reportText");
+      if (reportText) {
+        reportText.value = buildReportText();
+      }
+    }
+
+    function applyCurrentFoodToMeal(fieldId) {
+      const foodText = getFoodResultText();
+      if (!foodText) {
+        alert("目前沒有當餐食物可以套用");
+        return;
+      }
+      getRequiredElement(fieldId).value = foodText;
+      saveReportFields();
+      updateReportText();
+    }
+
+    async function copyReportText() {
+      const textarea = getRequiredElement("reportText");
+      await copyToClipboard(textarea.value, textarea);
+    }
+
+    async function copyToClipboard(text, fallbackTextarea) {
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("已複製");
+      } catch (error) {
+        fallbackTextarea.select();
+        document.execCommand("copy");
+        alert("已複製");
+      }
+    }
+
+    function saveReportFields() {
+      const fields = {};
+      document.querySelectorAll("[data-report-field]").forEach(field => {
+        fields[field.id] = field.value;
+      });
+      localStorage.setItem(REPORT_STORAGE_KEY, JSON.stringify(fields));
+    }
+
+    function loadReportFields() {
+      const today = new Date();
+      const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      getRequiredElement("reportDate").value = localDate;
+
+      try {
+        const fields = JSON.parse(localStorage.getItem(REPORT_STORAGE_KEY));
+        if (fields && typeof fields === "object") {
+          Object.entries(fields).forEach(([id, value]) => {
+            const field = document.getElementById(id);
+            if (field) field.value = value;
+          });
+        }
+      } catch (error) {
+        return;
+      }
+    }
+
+    function bindReportFields() {
+      document.querySelectorAll("[data-report-field]").forEach(field => {
+        field.addEventListener("input", () => {
+          saveReportFields();
+          updateReportText();
+        });
+        field.addEventListener("change", () => {
+          saveReportFields();
+          updateReportText();
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadReportFields();
+    bindReportFields();
+    renderItems();
+    updateReportText();
+
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>
