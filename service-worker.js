@@ -1,5 +1,5 @@
-const CACHE_NAME = "food-tracker-v5";
-const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg", "./app-icon.png"];
+const CACHE_NAME = "food-tracker-v6";
+const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg", "./app-icon.png", "./drive-sync.js", "./GOOGLE-DRIVE-SETUP.md"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
@@ -16,8 +16,8 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
-  if (event.request.mode === "navigate") {
+  if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
+  if (event.request.mode === "navigate" || new URL(event.request.url).pathname.endsWith("/drive-sync.js") || new URL(event.request.url).pathname.endsWith("/manifest.json")) {
     event.respondWith(fetch(event.request).then(response => {
       if (response.ok) {
         const copy = response.clone();

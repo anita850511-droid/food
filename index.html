@@ -573,7 +573,7 @@
     }
 
     function saveItems() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      appSetItem(STORAGE_KEY, JSON.stringify(items));
     }
 
     function getRequiredElement(id) {
@@ -865,8 +865,8 @@
       const entry = {fields, autoNote:previousPeriodNote, updatedAt:new Date().toISOString()};
       const next = {...dailyJournal, [date]:entry};
       try {
-        localStorage.setItem(JOURNAL_KEY, JSON.stringify(next));
-        localStorage.setItem(REPORT_STORAGE_KEY, JSON.stringify(fields));
+        appSetItem(JOURNAL_KEY, JSON.stringify(next));
+        appSetItem(REPORT_STORAGE_KEY, JSON.stringify(fields));
       } catch(e) { getRequiredElement('journalStatus').textContent='儲存失敗，請先下載備份並確認瀏覽器儲存空間。'; return false; }
       dailyJournal = next;
       getRequiredElement('journalStatus').textContent = date + ' 已儲存於此裝置';
@@ -879,7 +879,7 @@
       const date = legacy && validPeriodDate(legacy.reportDate) ? legacy.reportDate : localDateText(new Date());
       if (legacy && !dailyJournal[date]) {
         dailyJournal[date] = {fields:legacy, autoNote:previousPeriodNote, updatedAt:new Date().toISOString()};
-        localStorage.setItem(JOURNAL_KEY,JSON.stringify(dailyJournal));
+        appSetItem(JOURNAL_KEY,JSON.stringify(dailyJournal));
       }
       loadJournalDate(date);
     }
@@ -927,7 +927,7 @@
       } catch (e) {}
       return { units: ['g', 'ml', '份', '個'], templates: [] };
     }
-    function persistSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+    function persistSettings() { appSetItem(SETTINGS_KEY, JSON.stringify(settings)); }
     function templateNotice(message) {
       getRequiredElement('templateStatus').textContent = message;
     }
@@ -1041,7 +1041,7 @@
       if (foodLibrary.some(f => f.name === name && f.unit === unit && f.id !== editingFoodId)) { status.textContent = '相同名稱與單位已存在，請編輯原品項。'; return; }
       const food = { id: editingFoodId || crypto.randomUUID(), name, unit, basis, calories, source: getRequiredElement('foodSource').value.trim() };
       const next = foodLibrary.filter(f => f.id !== food.id).concat(food);
-      try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(next)); } catch(e) { status.textContent = '儲存失敗，請確認瀏覽器允許儲存或有足夠空間。'; return; }
+      try { appSetItem(LIBRARY_KEY, JSON.stringify(next)); } catch(e) { status.textContent = '儲存失敗，請確認瀏覽器允許儲存或有足夠空間。'; return; }
       foodLibrary = next; renderLibrary(); resetLibraryEditor(); status.textContent = '已儲存「' + name + '」，可在記錄頁及模板選用。';
     }
     function renderLibrary() {
@@ -1069,7 +1069,7 @@
         }), button('刪除', () => {
           if (!confirm('刪除資料庫中的「' + f.name + '」？既有記錄與模板會保留。')) return;
           const next = foodLibrary.filter(x => x.id !== f.id);
-          try { localStorage.setItem(LIBRARY_KEY,JSON.stringify(next)); } catch(e) { getRequiredElement('libraryStatus').textContent = '無法儲存刪除結果，請稍後再試。'; return; }
+          try { appSetItem(LIBRARY_KEY,JSON.stringify(next)); } catch(e) { getRequiredElement('libraryStatus').textContent = '無法儲存刪除結果，請稍後再試。'; return; }
           foodLibrary = next; if (editingFoodId === f.id) resetLibraryEditor(); renderLibrary();
         }));
         card.append(title,details,actions); list.append(card);
@@ -1110,7 +1110,7 @@
       const next = periodNoteFor(getRequiredElement('reportDate').value);
       field.value = [next, text].filter(Boolean).join('\n');
       previousPeriodNote = next;
-      localStorage.setItem('foodPeriodAutoNote', next);
+      appSetItem('foodPeriodAutoNote', next);
       saveReportFields(); updateReportText();
     }
     function resetPeriodEditor() {
@@ -1122,7 +1122,7 @@
       if (!validPeriodDate(start) || (end && (!validPeriodDate(end) || end < start))) { status.textContent = '請填寫開始日期；最後一天不可早於開始日期。'; return; }
       if (periods.some(p => p.id !== editingPeriodId && start <= (p.end || '9999-12-31') && p.start <= (end || '9999-12-31'))) { status.textContent = '日期與既有紀錄重疊，請編輯原紀錄，或先設定上一段的最後一天。'; return; }
       const next = periods.filter(p => p.id !== editingPeriodId).concat({ id: editingPeriodId || crypto.randomUUID(), start, end });
-      try { localStorage.setItem(PERIOD_KEY,JSON.stringify(next)); } catch(e) { status.textContent = '儲存失敗，請確認瀏覽器允許儲存。'; return; }
+      try { appSetItem(PERIOD_KEY,JSON.stringify(next)); } catch(e) { status.textContent = '儲存失敗，請確認瀏覽器允許儲存。'; return; }
       periods = next; periodMonth = new Date(start + 'T00:00:00'); periodMonth.setDate(1);
       resetPeriodEditor(); renderPeriods(); syncPeriodNote(); status.textContent = '已儲存，日誌備註已更新。';
     }
@@ -1162,7 +1162,7 @@
         const remove = document.createElement('button'); remove.className='small-btn secondary'; remove.textContent='刪除'; remove.onclick=()=>{
           if (!confirm('刪除這段生理期紀錄？')) return;
           const next=periods.filter(x=>x.id!==p.id);
-          try { localStorage.setItem(PERIOD_KEY,JSON.stringify(next)); } catch(e) { getRequiredElement('periodStatus').textContent='無法儲存刪除結果，請稍後再試。'; return; }
+          try { appSetItem(PERIOD_KEY,JSON.stringify(next)); } catch(e) { getRequiredElement('periodStatus').textContent='無法儲存刪除結果，請稍後再試。'; return; }
           periods=next; if(editingPeriodId===p.id) resetPeriodEditor(); renderPeriods(); syncPeriodNote();
         };
         actions.append(edit,remove); card.append(title,actions); history.append(card);
@@ -1172,7 +1172,7 @@
     function loadMealCalories() {
       try { const saved = JSON.parse(localStorage.getItem('foodMealCalories')); return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {}; } catch(e) { return {}; }
     }
-    function saveMealCalories() { localStorage.setItem(MEAL_CALORIES_KEY,JSON.stringify(mealCalories)); }
+    function saveMealCalories() { appSetItem(MEAL_CALORIES_KEY,JSON.stringify(mealCalories)); }
     function itemCalories(item) {
       const food = foodLibrary.find(f => f.name === item.name && f.unit === item.unit);
       if (!food || food.calories == null || !Number.isFinite(food.calories) || food.calories < 0 || !Number.isFinite(food.basis) || food.basis <= 0) return null;
@@ -1246,7 +1246,7 @@
       const days = Number(getRequiredElement('predictionDays').value), mode = getRequiredElement('predictionMode').value;
       if (!Number.isInteger(days) || days < 1 || days > 365) { getRequiredElement('predictionStatus').textContent='請輸入 1～365 的整數天數。'; return; }
       const next = {days,mode};
-      try { localStorage.setItem('foodPeriodPrediction',JSON.stringify(next)); } catch(e) { getRequiredElement('predictionStatus').textContent='無法儲存設定，請稍後再試。'; return; }
+      try { appSetItem('foodPeriodPrediction',JSON.stringify(next)); } catch(e) { getRequiredElement('predictionStatus').textContent='無法儲存設定，請稍後再試。'; return; }
       predictionSettings = next; renderPeriodCalendar(); getRequiredElement('predictionStatus').textContent='預估設定已儲存。';
     }
     function renderPrediction() {
@@ -1263,12 +1263,117 @@
       periodMonth = new Date(prediction.date+'T00:00:00'); periodMonth.setDate(1); renderPeriodCalendar(); getRequiredElement('periodMonthTitle').scrollIntoView({block:'center'});
     }
 
+    function loadDailyJournal() {
+      try { const data = JSON.parse(localStorage.getItem('foodDailyJournal')); return data && typeof data === 'object' && !Array.isArray(data) ? data : {}; } catch(e) { return {}; }
+    }
+    function updateJournalMeasure(id, input) {
+      if (input.value && !input.checkValidity()) { getRequiredElement('journalStatus').textContent='請輸入有效數值；體重須大於 0，體脂為 0～100。'; return; }
+      getRequiredElement(id).value = input.value; saveReportFields(); updateReportText(); renderJournalChart(); renderJournalHistory();
+    }
+    function saveJournalExplicitly() {
+      if (!getRequiredElement('journalWeight').checkValidity() || !getRequiredElement('journalFat').checkValidity()) { getRequiredElement('journalStatus').textContent='請先修正體重或體脂數值。'; return; }
+      if (saveReportFields()) { renderJournalChart(); renderJournalHistory(); }
+    }
+    function renderJournal() {
+      getRequiredElement('journalDate').value = activeReportDate;
+      getRequiredElement('journalWeight').value = getRequiredElement('bodyWeight').value;
+      getRequiredElement('journalFat').value = getRequiredElement('bodyFat').value;
+      renderJournalChart(); renderJournalHistory();
+    }
+    function journalPoints(metric, range, endDate) {
+      const end = periodDayNumber(endDate), start = range === 'all' ? -Infinity : end - Number(range) + 1;
+      return Object.entries(dailyJournal).filter(([date,entry]) => validPeriodDate(date) && entry?.fields).map(([date,entry]) => ({date, raw:entry.fields[metric]})).filter(p => p.raw !== '' && p.raw != null).map(p => ({date:p.date,value:Number(p.raw)})).filter(p => Number.isFinite(p.value) && (metric === 'bodyWeight' ? p.value > 0 : p.value >= 0 && p.value <= 100) && periodDayNumber(p.date) >= start && periodDayNumber(p.date) <= end).sort((a,b)=>a.date.localeCompare(b.date));
+    }
+    function renderJournalChart() {
+      const metric = getRequiredElement('chartMetric').value || 'bodyWeight';
+      const end = activeReportDate || localDateText(new Date());
+      const points = journalPoints(metric, getRequiredElement('chartRange').value || '30', end);
+      const host = getRequiredElement('journalChart'); host.replaceChildren();
+      const unit = metric === 'bodyWeight' ? 'kg' : '%';
+      getRequiredElement('chartSummary').textContent = '截至 ' + end + '，共 ' + points.length + ' 筆紀錄。' + (points.length ? '最新：' + points.at(-1).value + ' ' + unit : '先填寫體重或體脂，就會顯示圖表。');
+      if (!points.length) return;
+      const ns = 'http://www.w3.org/2000/svg';
+      const element = (tag, attrs, text) => { const e = document.createElementNS(ns,tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v))); if(text != null)e.textContent=text; return e; };
+      const svg = element('svg',{viewBox:'0 0 560 260',role:'img','aria-label':(metric==='bodyWeight'?'體重':'體脂')+'折線圖；詳細數值見下方表格'});
+      const values = points.map(p=>p.value), min = Math.min(...values), max = Math.max(...values), pad = Math.max((max-min)*.15,.5);
+      const lo = Math.max(0,min-pad), hi = max+pad, first=periodDayNumber(points[0].date), last=periodDayNumber(points.at(-1).date);
+      const x = p => last===first?300:55+(periodDayNumber(p.date)-first)/(last-first)*470;
+      const y = p => 210-(p.value-lo)/(hi-lo)*175;
+      for(let i=0;i<5;i++) { const value=lo+(hi-lo)*i/4, py=210-i/4*175; svg.append(element('line',{x1:55,y1:py,x2:525,y2:py,stroke:'#e5d9e9'}),element('text',{x:48,y:py+4,'text-anchor':'end','font-size':11,fill:'#775b4e'},value.toFixed(1))); }
+      if(points.length>1)svg.append(element('polyline',{points:points.map(p=>x(p)+','+y(p)).join(' '),fill:'none',stroke:'#ad6553','stroke-width':3}));
+      points.forEach(p=>{const dot=element('circle',{cx:x(p),cy:y(p),r:4,fill:'#ad6553'});dot.append(element('title',{},p.date+'：'+p.value+' '+unit));svg.append(dot);});
+      svg.append(element('text',{x:55,y:240,'font-size':11,fill:'#775b4e'},points[0].date));
+      if(points.length>1)svg.append(element('text',{x:525,y:240,'text-anchor':'end','font-size':11,fill:'#775b4e'},points.at(-1).date));
+      host.append(svg);
+      const details=document.createElement('details'),summary=document.createElement('summary'); summary.textContent='查看圖表數值'; details.append(summary);
+      const table=document.createElement('table'); table.className='chart-table'; const header=document.createElement('tr'); ['日期',metric==='bodyWeight'?'體重 kg':'體脂 %'].forEach(t=>{const th=document.createElement('th');th.textContent=t;header.append(th);});table.append(header);
+      points.forEach(p=>{const row=document.createElement('tr');[p.date,p.value].forEach(t=>{const td=document.createElement('td');td.textContent=t;row.append(td);});table.append(row);});details.append(table);host.append(details);
+    }
+    function renderJournalHistory() {
+      const host=getRequiredElement('journalHistory');host.replaceChildren();
+      const entries=Object.entries(dailyJournal).filter(([date,e])=>validPeriodDate(date)&&e?.fields&&(e.fields.diaryText?.trim() || e.fields.bodyWeight || e.fields.bodyFat || MEAL_FIELDS.some(id=>e.fields[id]&&e.fields[id]!=='無'))).sort((a,b)=>b[0].localeCompare(a[0]));
+      if(!entries.length){const text=document.createElement('p');text.className='hint';text.textContent='尚無日記或身體紀錄。';host.append(text);return;}
+      entries.forEach(([date,entry])=>{const row=document.createElement('div');row.className='journal-entry';const title=document.createElement('strong');title.textContent=date+' · 體重 '+(entry.fields.bodyWeight||'未填')+' kg · 體脂 '+(entry.fields.bodyFat||'未填')+' %';const note=document.createElement('p');note.className='hint';note.textContent=entry.fields.diaryText||'已儲存這天的飲食／身體紀錄';const open=document.createElement('button');open.className='small-btn secondary';open.textContent='查看／編輯';open.onclick=()=>{switchReportDate(date);getRequiredElement('journalDate').focus();};row.append(title,note,open);host.append(row);});
+    }
+    const BACKUP_KEYS = ['foodItems','weightReportFields','foodUserSettings','foodLibrary','foodPeriodHistory','foodPeriodAutoNote','foodMealCalories','foodPeriodPrediction','foodDailyJournal'];
+    let pendingBackup = null;
+    function backupPayload() { const data={}; BACKUP_KEYS.forEach(key=>{const value=localStorage.getItem(key);if(value!==null)data[key]=value;});return {app:'food-tracker',version:1,exportedAt:new Date().toISOString(),data}; }
+    function downloadBackup(payload, prefix='食物日記備份') {
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=prefix+'-'+localDateText(new Date())+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+    function exportBackup() { if(!saveReportFields())return; downloadBackup(backupPayload());getRequiredElement('backupStatus').textContent='已產生備份下載；請確認檔案已保存。'; }
+    function validateBackup(payload) {
+      if(!payload || payload.app!=='food-tracker'||payload.version!==1||!payload.data||Array.isArray(payload.data)||typeof payload.data!=='object')throw Error('不是可辨識的備份格式');
+      const result={};
+      Object.entries(payload.data).forEach(([key,value])=>{
+        if(!BACKUP_KEYS.includes(key)||typeof value!=='string')throw Error('備份包含不支援的欄位');
+        if(key==='foodPeriodAutoNote'){result[key]=value;return;}
+        const parsed=JSON.parse(value);
+        if(['foodItems','foodLibrary','foodPeriodHistory'].includes(key)? !Array.isArray(parsed) : !parsed||typeof parsed!=='object'||Array.isArray(parsed))throw Error('備份資料格式不正確：'+key);
+        if(key==='foodDailyJournal' && Object.entries(parsed).some(([date,e])=>!validPeriodDate(date)||!e?.fields||typeof e.fields!=='object'))throw Error('日記資料格式不正確');
+        if(key==='foodItems' && parsed.some(f=>!f || typeof f.name!=='string' || !Number.isFinite(Number(f.weight)) || Number(f.weight)<0 || (f.unit!=null&&typeof f.unit!=='string')))throw Error('食物清單格式不正確');
+        if(key==='foodLibrary' && parsed.some(f=>!f || typeof f.id!=='string' || typeof f.name!=='string' || typeof f.unit!=='string' || !Number.isFinite(f.basis) || f.basis<=0 || (f.calories!=null&&(!Number.isFinite(f.calories)||f.calories<0))))throw Error('品項資料格式不正確');
+        if(key==='foodUserSettings' && (!Array.isArray(parsed.units)||!parsed.units.length||parsed.units.some(u=>typeof u!=='string'||!u.trim())||!Array.isArray(parsed.templates)||parsed.templates.some(t=>!t||typeof t.id!=='string'||typeof t.name!=='string'||!Array.isArray(t.foods)||t.foods.some(f=>!f||typeof f.name!=='string'||typeof f.unit!=='string'))))throw Error('模板或單位格式不正確');
+        if(key==='foodPeriodHistory' && parsed.some(p=>!p||typeof p.id!=='string'||!validPeriodDate(p.start)||(p.end&&(!validPeriodDate(p.end)||p.end<p.start))))throw Error('生理期資料格式不正確');
+        result[key]=value;
+      });
+      return result;
+    }
+    async function previewBackup(input) {
+      pendingBackup=null;getRequiredElement('restoreBackupButton').disabled=true;
+      const file=input.files[0];if(!file)return;
+      try { if(file.size>20*1024*1024)throw Error('檔案超過20MB');const payload=JSON.parse(await file.text());pendingBackup=validateBackup(payload);getRequiredElement('backupStatus').textContent='備份可讀取，共 '+Object.keys(pendingBackup).length+' 類資料。還原會取代此裝置的資料，並先下載目前資料的備份。';getRequiredElement('restoreBackupButton').disabled=false; }
+      catch(e){getRequiredElement('backupStatus').textContent='無法讀取：'+e.message;}
+    }
+    function restoreBackup() {
+      if(!pendingBackup||!confirm('確定以備份取代此裝置資料？目前資料會先下載成還原前備份。'))return;
+      const before=backupPayload();downloadBackup(before,'還原前備份');
+      try { BACKUP_KEYS.forEach(key=>{if(Object.hasOwn(pendingBackup,key))appSetItem(key,pendingBackup[key]);else localStorage.removeItem(key);}); }
+      catch(e){BACKUP_KEYS.forEach(key=>{if(Object.hasOwn(before.data,key))appSetItem(key,before.data[key]);else localStorage.removeItem(key);});getRequiredElement('backupStatus').textContent='還原失敗，已保留原資料。';return;}
+      location.reload();
+    }
+
+    function applyBackupData(data) {
+      const before=backupPayload().data;
+      try { BACKUP_KEYS.forEach(key=>{if(Object.hasOwn(data,key))localStorage.setItem(key,data[key]);else localStorage.removeItem(key);}); }
+      catch(e) { BACKUP_KEYS.forEach(key=>{if(Object.hasOwn(before,key))localStorage.setItem(key,before[key]);else localStorage.removeItem(key);});throw Error('裝置空間不足，未套用雲端資料。'); }
+    }
+    function hydrateFromStorage() {
+      items=loadItems().map(item=>({...item,unit:item.unit||'g'}));settings=loadSettings();foodLibrary=loadFoodLibrary();periods=loadPeriods();predictionSettings=loadPredictionSettings();mealCalories=loadMealCalories();dailyJournal=loadDailyJournal();previousPeriodNote=localStorage.getItem('foodPeriodAutoNote')||'';
+      getRequiredElement('unitSettings').value=settings.units.join('\n');fillUnits(getRequiredElement('itemUnit'));resetTemplateEditor();renderTemplates();resetLibraryEditor();renderLibrary();loadReportFields();renderPeriods();renderItems();renderJournal();updateReportText();
+      getRequiredElement('predictionMode').value=predictionSettings.mode;getRequiredElement('predictionDays').value=predictionSettings.days;
+    }
+    function appSetItem(key,value) {
+      localStorage.setItem(key,value);
+      if(typeof queueCloudSync==='function')queueCloudSync();
+    }
+
     initializeSettings();
     getRequiredElement("predictionMode").value = predictionSettings.mode;
     getRequiredElement("predictionDays").value = predictionSettings.days;
     resetLibraryEditor();
-    renderLibrary();
     loadReportFields();
+    renderLibrary();
     syncPeriodNote();
     renderPeriods();
     bindReportFields();
@@ -1279,6 +1384,7 @@
       navigator.serviceWorker.register("service-worker.js").catch(() => {});
     }
   </script>
+  <script src="drive-sync.js"></script>
 </body>
 </html>
 
