@@ -3,10 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#e58a45">
+  <meta name="theme-color" content="#fff4ee">
   <title>食物重量記錄</title>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json"><link rel="icon" type="image/png" href="app-icon.png"><link rel="apple-touch-icon" href="app-icon.png">
   <style>
+    [hidden] { display: none !important; }
+    .layout { max-width: 850px; margin: auto; display: grid; grid-template-columns: 160px minmax(0, 1fr); }
+    .sidebar { padding: 20px 12px; }
+    .sidebar button { margin-bottom: 10px; }
+    .sidebar button[aria-current="page"] { background: #a95220; color: white; }
+    .app { width: 100%; }
+    .quantity-row { display: grid; grid-template-columns: 66px minmax(70px, 1fr) 95px; gap: 8px; margin: 10px 0; }
+    .quantity-row select { padding: 12px 8px; }
+    .field-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .template-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; gap: 8px; margin: 10px 0; align-items: center; }
+    .template-row input { min-width: 0; }
+    button:focus-visible { outline: 3px solid #a95220; outline-offset: 2px; }
+    @media(max-width: 600px) { .layout { display: block; } .sidebar { display: flex; gap: 10px; padding-bottom: 0; } .app { max-width: none !important; } }
     * {
       box-sizing: border-box;
     }
@@ -66,11 +79,13 @@
     .input-row,
     .quick-row {
       display: grid;
-      grid-template-columns: 1fr 100px;
+      grid-template-columns: 1fr;
       gap: 10px;
       margin-bottom: 10px;
     }
 
+    .body-measurements { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .body-measurements input { min-width: 0; }
     .two-col {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -133,6 +148,7 @@
       cursor: pointer;
     }
 
+    button:disabled { opacity: .5; cursor: not-allowed; }
     button:active {
       transform: scale(.98);
     }
@@ -225,31 +241,133 @@
         grid-template-columns: 1fr;
       }
     }
+    .library-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .library-card { padding:16px 0; border-bottom:1px dashed #dfcfc1; overflow-wrap:anywhere; }
+    @media(max-width:600px) { .sidebar { flex-wrap:wrap; } .sidebar button { flex:1; min-width:90px; } }
+    .calendar-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:8px; }
+    .calendar-heading h2 { margin:0; }
+    .period-calendar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; text-align:center; }
+    .calendar-weekday { font-size:12px; padding:8px 0; color:#876458; }
+    .period-calendar button { padding:8px 0; min-height:42px; color:#704d40; background:#fffaf5; box-shadow:none; border:1px solid #eadbd0; font-size:14px; }
+    .period-calendar button.period-day { background:#f6cdd5; border-color:#db9baa; }
+    .period-calendar button.selected-day { outline:2px solid #9b5f68; outline-offset:0; }
+    .app-mascot { width: 112px; height: 112px; object-fit: cover; border-radius: 28px; border: 4px solid #fff6da; box-shadow: 0 5px 0 #ebd7a5; margin-bottom: 18px; }
+    .nutrition-fields { align-items:start; }
+    .nutrition-fields .field { display:flex; flex-direction:column; gap:6px; }
+    .nutrition-fields label { min-height:40px; display:flex; align-items:flex-end; }
+    .nutrition-fields input { height:48px; }
+    .calorie-total { padding:12px 14px; border-radius:14px; background:#f4e6d1; color:#704d40; font-weight:700; line-height:1.6; }
+    .period-calendar button.predicted-day { background:#eee4fa; border:2px dashed #9671b3; }
+    #journalChart svg { display:block; width:100%; height:auto; overflow:visible; }
+    .journal-entry { border-bottom:1px dashed #dfcfc1; padding:14px 0; }
+    .journal-entry p { white-space:pre-wrap; overflow-wrap:anywhere; }
+    .chart-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .chart-table th, .chart-table td { padding:6px; text-align:left; border-bottom:1px solid #eadbd0; }
+    /* A warm, illustrated notebook palette. */
+    body {
+      color: #59453f;
+      background-color: #fff4ee;
+      background-image: radial-gradient(#eacfc5 1px, transparent 1px);
+      background-size: 22px 22px;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+    }
+    .layout { max-width: 920px; padding: 28px 16px; gap: 12px; align-items: start; }
+    .sidebar { position: sticky; top: 24px; padding: 16px 0; }
+    .sidebar::before { content: "🍑  日常小食光"; display: block; padding: 8px 4px 24px; font-size: 16px; font-weight: 800; color: #865043; }
+    .sidebar button { border: 1px solid #edd5cd; background: #fffaf5; color: #815849; box-shadow: 0 3px 0 #eddcd4; border-radius: 18px; font-size: 14px; }
+    .sidebar button[aria-current="page"] { background: #f7d3cb; color: #713e35; border-color: #e6b9ae; }
+    .app { max-width: 680px; min-height: auto; padding: 28px; background: #fffdf8; border: 1px solid #ead7cd; border-radius: 32px; box-shadow: 0 12px 40px #a46b4810; }
+    .page-header { text-align: center; padding: 10px 0 22px; }
+    .header-art { display: inline-flex; align-items: center; gap: 16px; padding: 10px 24px; border: 1px dashed #e4bcb0; border-radius: 40px; background: #fff1e6; font-size: 30px; transform: rotate(-3deg); margin-bottom: 16px; }
+    .header-art span:nth-child(2) { font-size: 38px; }
+    h1 { color: #75483d; font-size: 27px; letter-spacing: 2px; margin: 2px 0 10px; }
+    .subtitle { color: #876e62; margin: 0; font-size: 13px; }
+    h2 { color: #704d40; font-size: 18px; letter-spacing: .5px; }
+    .form-card, .quick-card, .list-card, .copy-card, .report-card { border: 1px solid #eadbd0; padding: 20px; border-radius: 23px; margin-bottom: 18px; background: #fffaf3; box-shadow: 0 4px 0 #f2e8dd; }
+    .quick-card { background: #f3f7ed; border-color: #dbe3cf; box-shadow: 0 4px 0 #e7ecdf; }
+    .copy-card { background: #fff0ec; border-color: #edd4cb; }
+    .report-card { background: #fbf7ff; border-color: #e4dceb; box-shadow: 0 4px 0 #eee7f3; }
+    .quick-card h2::before { content: "🥑 "; }
+    .report-card h2::before { content: "📔 "; }
+    label { color: #775b4e; font-size: 13px; }
+    input, select, textarea { color: #59453f; border: 1px solid #dfd1c6; border-radius: 14px; background: #fffefd; font-family: inherit; }
+    input::placeholder, textarea::placeholder { color: #967f74; }
+    input:focus, select:focus, textarea:focus { border-color: #b87865; box-shadow: 0 0 0 3px #e8bbaa40; }
+    button { background: #ad6553; border-radius: 15px; font-family: inherit; font-size: 15px; box-shadow: 0 3px 0 #8e504330; transition: background .15s, transform .15s; }
+    button:hover { background: #945340; }
+    button:focus-visible { outline: 3px solid #9d6a52; outline-offset: 3px; }
+    button:active { transform: translateY(2px); }
+    .secondary { background: #f3e0cf; color: #784b36; box-shadow: none; }
+    .secondary:hover { background: #ead2bc; }
+    .delete { background: #ad5960; }
+    .delete:hover { background: #93454c; }
+    .small-btn { border-radius: 12px; font-size: 13px; min-width: 60px; }
+    .hint { color: #806c60; line-height: 1.7; }
+    .empty { color: #8e796a; padding: 24px 0; }
+    .empty::before { content: "🍽️"; display: block; font-size: 32px; margin-bottom: 8px; }
+    .item { border-color: #e8d9cc; border-radius: 17px; background: #fffefa; }
+    .item-name { color: #704d40; }
+    .item-weight { color: #846b5d; }
+    .meal-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .report-output { background: #fffefd; font-size: 14px; }
+    #templateStatus { border-left: 3px solid #a3b68c; padding-left: 10px; }
+    @media (max-width: 600px) {
+      .layout { padding: 10px; }
+      .sidebar { position: static; padding: 4px 4px 12px; }
+      .sidebar::before { display: none; }
+      .sidebar button { margin: 0; }
+      .app { padding: 16px; border-radius: 25px; }
+      .form-card, .quick-card, .list-card, .copy-card, .report-card { padding: 15px; border-radius: 19px; }
+      h1 { font-size: 24px; }
+      .page-header { padding-bottom: 20px; }
+    }
+    @media (prefers-reduced-motion: reduce) { button { transition: none; } }
   </style>
 </head>
 <body>
+  <div class="layout">
+  <nav class="sidebar" aria-label="主要導覽"><button id="recordTab" onclick="showPage('record')" aria-current="page">飲食記錄</button><button id="settingsTab" class="secondary" onclick="showPage('settings')">使用者設定</button><button id="libraryTab" class="secondary" onclick="showPage('library')">品項資料庫</button><button id="periodTab" class="secondary" onclick="showPage('period')">生理期日曆</button><button id="journalTab" class="secondary" onclick="showPage('journal')">日記與體重</button><button id="syncTab" class="secondary" onclick="showPage('sync')">同步與備份</button></nav>
   <main class="app">
-    <h1>食物重量記錄</h1>
-    <p class="subtitle">先照原本方式記錄當餐食物重量，再一鍵整理成體重日誌格式。</p>
+    <header class="page-header">
+      <div class="header-art" aria-hidden="true"><span>🥐</span><span>🍑</span><span>🥛</span></div>
+      <h1>食物重量記錄</h1>
+      <p class="subtitle">好好吃飯，也好好記下每一天 ♡</p>
+    </header>
 
+    <div id="recordPage">
     <section class="form-card">
+      <h2>🍓 新增一份美味</h2><div class="field"><label for="libraryPick">從品項資料庫選用</label><select id="libraryPick" onchange="useLibraryFood()"></select></div>
       <div class="input-row">
         <input id="itemName" type="text" placeholder="食物名稱，例如雞柳條">
-        <input id="itemWeight" type="number" inputmode="decimal" placeholder="重量g" min="0" step="0.1">
+
       </div>
+      <div class="quantity-row"><select id="itemSign" aria-label="新增食物加減"><option value="1">+</option><option value="-1">−</option></select><input id="itemWeight" aria-label="食物數量" type="number" min="0" step="0.1" inputmode="decimal" placeholder="數量"><select id="itemUnit" aria-label="食物單位"></select></div>
       <button type="button" onclick="addItem()">新增食物</button>
       <div class="hint">例如輸入「花枝漿」和「234.8」，會記成花枝漿 234.8g。</div>
     </section>
 
     <section class="quick-card">
+      <h2>快速調整重量</h2>
+      <div class="field">
+        <label for="templateSelect">食物模板</label>
+        <select id="templateSelect" aria-label="選擇模板" onchange="loadQuickTemplate()"></select>
+      </div>
+      
+      <p id="templateStatus" class="hint" role="status" aria-live="polite"></p>
+      
+      <button class="secondary" style="margin-top:10px" onclick="showPage('settings')">建立／管理模板</button>
+      <div class="field" style="margin-top:20px">
+        <label for="quickItemSelect">選擇品項</label>
+      </div>
       <div class="quick-row">
         <select id="quickItemSelect">
           <option value="">選擇食物</option>
         </select>
-        <input id="quickWeight" type="number" inputmode="decimal" placeholder="+重量g" step="0.1">
+
       </div>
+      <div class="quantity-row"><select id="quickSign" aria-label="快速調整加減"><option value="1">+</option><option value="-1">−</option></select><input id="quickWeight" aria-label="調整數量" type="number" min="0" step="0.1" inputmode="decimal" placeholder="數量"><select id="quickUnit" aria-label="調整單位"></select></div>
       <button type="button" onclick="addQuickWeight()">快速調整重量</button>
-      <div class="hint">可輸入 20、10.5 或 -20，正數增加、負數減少。</div>
+      <div class="hint">先選 + 或 −，再輸入數量及相同單位；不同單位不會自動換算。</div>
     </section>
 
     <section class="list-card">
@@ -263,20 +381,37 @@
     <section class="copy-card">
       <div class="hint">當餐食物整理結果</div>
       <textarea id="resultText" readonly placeholder="新增食物後會自動產生，例如：雞柳條375g、花枝漿234.8g"></textarea>
+      <p id="currentCalories" class="calorie-total" role="status" aria-live="polite"></p>
+      <p class="hint">依品項資料庫中相同名稱與單位計算；可到「品項資料庫」補上未設定的熱量。</p>
       <button type="button" onclick="copyText()">複製當餐食物</button>
+      <div class="meal-actions">
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('breakfast')">套早餐</button>
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('lunch')">套午餐</button>
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('dinner')">套晚餐</button>
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('snack')">套點心</button>
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('fruit')">套水果</button>
+        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('otherFood')">套其他</button>
+      </div>
+      <div class="hint">上方食物清單會套成「雞柳條375g、花枝漿234.8g」這種格式。</div>
+
+
     </section>
 
     <section class="report-card">
       <h2>體重日誌產生器</h2>
 
-      <div class="two-col">
-        <div class="field">
-          <label for="reportDate">日期</label>
-          <input id="reportDate" type="date" data-report-field>
-        </div>
+      <div class="field">
+        <label for="reportDate">日期</label>
+        <input id="reportDate" type="date" data-report-field>
+      </div>
+      <div class="body-measurements">
         <div class="field">
           <label for="bodyWeight">體重 kg</label>
           <input id="bodyWeight" type="number" inputmode="decimal" step="0.1" placeholder="61.1" data-report-field>
+        </div>
+        <div class="field">
+          <label for="bodyFat">體脂 %</label>
+          <input id="bodyFat" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="25.5" data-report-field>
         </div>
       </div>
 
@@ -302,68 +437,131 @@
         </select>
       </div>
 
-      <div class="meal-actions">
-        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('breakfast')">套早餐</button>
-        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('lunch')">套午餐</button>
-        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('dinner')">套晚餐</button>
-        <button type="button" class="secondary" onclick="applyCurrentFoodToMeal('snack')">套點心</button>
-      </div>
-      <div class="hint">上方食物清單會套成「雞柳條375g、花枝漿234.8g」這種格式。</div>
-
       <div class="field">
-        <label for="breakfast">早餐</label>
-        <textarea id="breakfast" data-report-field>無</textarea>
+        <div class="field-heading"><label for="breakfast">早餐</label><button class="small-btn secondary" type="button" onclick="clearReportField('breakfast')" aria-label="清除早餐">清除</button></div>
+        <textarea id="breakfast" data-report-field>無</textarea><span id="breakfastCalories" class="hint"></span>
       </div>
       <div class="field">
-        <label for="lunch">午餐</label>
-        <textarea id="lunch" data-report-field>無</textarea>
+        <div class="field-heading"><label for="lunch">午餐</label><button class="small-btn secondary" type="button" onclick="clearReportField('lunch')" aria-label="清除午餐">清除</button></div>
+        <textarea id="lunch" data-report-field>無</textarea><span id="lunchCalories" class="hint"></span>
       </div>
       <div class="field">
-        <label for="dinner">晚餐</label>
-        <textarea id="dinner" data-report-field>無</textarea>
+        <div class="field-heading"><label for="dinner">晚餐</label><button class="small-btn secondary" type="button" onclick="clearReportField('dinner')" aria-label="清除晚餐">清除</button></div>
+        <textarea id="dinner" data-report-field>無</textarea><span id="dinnerCalories" class="hint"></span>
       </div>
       <div class="field">
-        <label for="fruit">水果</label>
-        <textarea id="fruit" data-report-field>無</textarea>
+        <div class="field-heading"><label for="fruit">水果</label><button class="small-btn secondary" type="button" onclick="clearReportField('fruit')" aria-label="清除水果">清除</button></div>
+        <textarea id="fruit" data-report-field>無</textarea><span id="fruitCalories" class="hint"></span>
       </div>
       <div class="field">
-        <label for="snack">點心</label>
-        <textarea id="snack" data-report-field>無</textarea>
+        <div class="field-heading"><label for="snack">點心</label><button class="small-btn secondary" type="button" onclick="clearReportField('snack')" aria-label="清除點心">清除</button></div>
+        <textarea id="snack" data-report-field>無</textarea><span id="snackCalories" class="hint"></span>
       </div>
       <div class="field">
-        <label for="otherFood">其他</label>
-        <textarea id="otherFood" data-report-field>無</textarea>
+        <div class="field-heading"><label for="otherFood">其他</label><button class="small-btn secondary" type="button" onclick="clearReportField('otherFood')" aria-label="清除其他">清除</button></div>
+        <textarea id="otherFood" data-report-field>無</textarea><span id="otherFoodCalories" class="hint"></span>
       </div>
 
       <div class="two-col">
         <div class="field">
-          <label for="water">純水</label>
+          <div class="field-heading"><label for="water">純水</label><button class="small-btn secondary" type="button" onclick="clearReportField('water')" aria-label="清除純水">清除</button></div>
           <input id="water" type="text" placeholder="2000ml" data-report-field>
         </div>
         <div class="field">
-          <label for="tea">無糖茶</label>
+          <div class="field-heading"><label for="tea">無糖茶</label><button class="small-btn secondary" type="button" onclick="clearReportField('tea')" aria-label="清除無糖茶">清除</button></div>
           <input id="tea" type="text" value="無" data-report-field>
         </div>
       </div>
 
       <div class="field">
-        <label for="bodyNote">備註</label>
+        <div class="field-heading"><label for="bodyNote">備註</label><button class="small-btn secondary" type="button" onclick="clearReportField('bodyNote')" aria-label="清除備註">清除</button></div>
         <textarea id="bodyNote" placeholder="身體感覺、心情、運動量、特殊狀況等" data-report-field></textarea>
       </div>
 
+      <p id="dailyCalories" class="calorie-total"></p><p class="hint">每個日期獨立保存。合計六個飲食欄位，不含飲水。手動修改餐別文字後須重新套用食物，才能更新該餐熱量。</p>
       <div class="hint">完整日誌</div>
       <textarea id="reportText" class="report-output" readonly></textarea>
       <div class="report-actions">
         <button type="button" onclick="copyReportText()">複製完整日誌</button>
       </div>
     </section>
-  </main>
+    </div>
+    <div id="journalPage" hidden>
+      <section class="form-card"><h2>📖 日記與體重</h2><p class="hint">每天獨立保存，切換日期即可查看或補記。輸入時自動儲存在此裝置。</p>
+        <div class="field"><label for="journalDate">記錄日期</label><input id="journalDate" type="date" onchange="switchReportDate(this.value)"></div>
+        <div class="body-measurements"><div class="field"><label for="journalWeight">體重 kg</label><input id="journalWeight" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="例如 61.1" oninput="updateJournalMeasure('bodyWeight',this)"></div><div class="field"><label for="journalFat">體脂 %</label><input id="journalFat" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="例如 25.5" oninput="updateJournalMeasure('bodyFat',this)"></div></div>
+        <div class="field"><label for="diaryText">今天的日記</label><textarea id="diaryText" style="min-height:160px" placeholder="今天的心情、發生的事，或想記住的小事……" data-report-field></textarea></div>
+        <div class="two-col"><button onclick="saveJournalExplicitly()">儲存今天的日記</button><button class="secondary" onclick="showPage('record')">查看這天的飲食日誌</button></div>
+        <p id="journalStatus" class="hint" role="status" aria-live="polite"></p>
+      </section>
+      <section class="report-card"><h2>📈 身體變化折線圖</h2><div class="two-col"><div class="field"><label for="chartMetric">顯示項目</label><select id="chartMetric" onchange="renderJournalChart()"><option value="bodyWeight">體重 kg</option><option value="bodyFat">體脂 %</option></select></div><div class="field"><label for="chartRange">時間範圍</label><select id="chartRange" onchange="renderJournalChart()"><option value="30">最近30天</option><option value="90">最近90天</option><option value="all">全部紀錄</option></select></div></div><p id="chartSummary" class="hint"></p><div id="journalChart"></div><p class="hint">只使用已填寫的有效數值；空白日期不當作 0。圖中的連線僅連接記錄點。</p></section>
+      <section class="list-card"><h2>過往日記</h2><div id="journalHistory"></div></section>
+    </div>
+    <div id="syncPage" hidden>
+      <section class="form-card"><h2>☁️ 個人雲端同步</h2><p id="cloudStatus" class="hint" role="status" aria-live="polite">尚未連接雲端，資料目前只保存在此裝置。</p><div id="cloudControls"></div></section>
+      <section class="form-card"><h2>📦 下載備份</h2><p class="hint">備份包含飲食、日記、體重、生理期、模板與品項資料。不包含登入資訊，請妥善保存備份檔。</p><button onclick="exportBackup()">下載完整備份（JSON）</button><div class="field" style="margin-top:16px"><label for="backupFile">選擇要還原的備份</label><input id="backupFile" type="file" accept="application/json,.json" onchange="previewBackup(this)"></div><p id="backupStatus" class="hint" role="status"></p><button id="restoreBackupButton" class="secondary" disabled onclick="restoreBackup()">還原此備份</button></section>
+    </div>
+    <div id="periodPage" hidden>
+      <section class="form-card"><h2>🌷 生理期日曆</h2><p class="hint">記下開始與最後一天，日誌備註會依日期自動帶入。尚未結束時，最後一天可留白。</p>
+        <div class="two-col"><div class="field"><label for="periodStart">開始日期（第1天）</label><input id="periodStart" type="date"></div><div class="field"><label for="periodEnd">最後一天（選填）</label><input id="periodEnd" type="date"></div></div>
+        <div class="two-col"><button id="savePeriodButton" onclick="savePeriod()">儲存生理期</button><button class="secondary" onclick="resetPeriodEditor()">新增一段紀錄</button></div><p id="periodStatus" class="hint" role="status" aria-live="polite"></p>
+      </section>
+      <section class="form-card"><h2>🌙 下次生理期預估</h2>
+        <div class="field"><label for="predictionMode">計算方式</label><select id="predictionMode"><option value="manual">自訂週期天數</option><option value="average">近期紀錄平均（最多6個週期）</option></select></div>
+        <div class="field"><label for="predictionDays">自訂週期天數</label><input id="predictionDays" type="number" min="1" max="365" step="1"><p class="hint">從一次開始日算到下次開始日。初始值 28 天，可依自己的紀錄調整；平均模式不使用此數值。</p></div>
+        <button onclick="savePredictionSettings()">儲存預估設定</button><p id="predictionStatus" class="hint" role="status"></p><p id="predictionResult" class="calorie-total" aria-live="polite"></p><button id="viewPredictionButton" class="secondary" onclick="viewPredictionMonth()">查看預估月份</button>
+        <p class="hint">日期僅供參考，不作為避孕或排卵判斷依據。預估不會寫入實際紀錄或備註。</p>
+      </section>
+      <section class="list-card"><div class="calendar-heading"><button class="small-btn secondary" aria-label="上個月" onclick="movePeriodMonth(-1)">‹</button><h2 id="periodMonthTitle"></h2><button class="small-btn secondary" aria-label="下個月" onclick="movePeriodMonth(1)">›</button></div><div class="period-calendar" id="periodCalendar"></div><p class="hint">粉色：生理期　紫色虛線：預估開始日　圓框：日誌日期。點日期可開啟該日誌並帶入備註。</p></section>
+      <section class="list-card"><h2>生理期紀錄</h2><div id="periodHistory"></div></section>
+      <p class="hint">實際紀錄與預估設定都保存在目前瀏覽器。</p>
+    </div>
+    <div id="libraryPage" hidden>
+      <section class="form-card"><h2>🥕 品項資料庫</h2>
+        <p class="hint">把常吃的食物存起來，下次記錄或建立模板時直接選用。</p>
+        <div class="field"><label for="foodName">品項名稱</label><input id="foodName" placeholder="例如：雞柳條、雞蛋"></div>
+        <div class="field"><label for="foodUnit">記錄單位</label><select id="foodUnit"></select></div>
+        <div class="two-col nutrition-fields">
+          <div class="field"><label for="foodBasis">熱量對應數量</label><input id="foodBasis" type="number" min="0.1" step="any" value="100"><span class="hint">例如 100g 填 100；每個填 1。</span></div>
+          <div class="field"><label for="foodCalories">熱量（大卡，可留白）</label><input id="foodCalories" type="number" min="0" step="any" placeholder="依包裝標示填寫"></div>
+        </div>
+        <div class="field"><label for="foodSource">備註／熱量來源（選填）</label><input id="foodSource" placeholder="例如：品牌、熟重、包裝營養標示"></div>
+        <div class="two-col"><button id="saveFoodButton" onclick="saveLibraryFood()">儲存品項</button><button class="secondary" onclick="resetLibraryEditor()">建立新品項</button></div>
+        <p id="libraryStatus" class="hint" role="status" aria-live="polite"></p>
+      </section>
+      <section class="list-card"><h2>我的常用食物</h2><div class="field"><label for="foodSearch">搜尋品項</label><input id="foodSearch" type="search" placeholder="輸入名稱或備註" oninput="renderLibraryList()"></div><div id="foodLibraryList"></div></section>
+      <p class="hint">資料儲存在目前瀏覽器。熱量留白代表未設定；新增食物或快速調整數量時會試算當餐熱量；已套入餐別的熱量會保留當時數值。</p>
+    </div>
+    <div id="settingsPage" hidden>
+      <section class="form-card"><h2>單位設定</h2><label for="unitSettings">可選單位（每行一個，第一個為預設）</label><textarea id="unitSettings" placeholder="g&#10;ml&#10;份"></textarea><button onclick="saveUnits()">儲存單位</button><p class="hint">修改選單不會改動已記錄食物的單位。</p></section>
+      <section class="form-card"><h2>食物模板</h2><label for="templateName">模板名稱</label><input id="templateName" placeholder="例如：平日模板"><div class="field"><label for="templateLibraryPick">從品項資料庫加入模板</label><select id="templateLibraryPick"></select><button class="secondary" onclick="addLibraryToTemplate()">加入模板品項</button></div><div id="templateEditor"></div><button class="secondary" onclick="addTemplateRow()">新增模板食物</button><div class="footer-actions"><button onclick="saveTemplate()">儲存模板</button><button class="secondary" onclick="resetTemplateEditor()">建立新模板</button></div><p class="hint">設定常吃的食物及單位，數量在記錄頁面填入。</p><div id="savedTemplates"></div></section>
+      <p class="hint">設定與記錄儲存在目前瀏覽器，未跨裝置同步。</p>
+    </div>
+  </main></div>
 
   <script>
     const STORAGE_KEY = "foodItems";
+    const MEAL_CALORIES_KEY = 'foodMealCalories';
+    let mealCalories = loadMealCalories();
+    const MEAL_FIELDS = ['breakfast','lunch','dinner','fruit','snack','otherFood'];
+    const JOURNAL_KEY = 'foodDailyJournal';
+    let dailyJournal = loadDailyJournal();
+    let activeReportDate = '';
     const REPORT_STORAGE_KEY = "weightReportFields";
 
-    let items = loadItems();
+    let items = loadItems().map(item => ({ ...item, unit: item.unit || "g" }));
+    const SETTINGS_KEY = "foodUserSettings";
+    let settings = loadSettings();
+    let editingTemplateId = null;
+    const PERIOD_KEY = 'foodPeriodHistory';
+    let periods = loadPeriods();
+    let editingPeriodId = null;
+    let periodMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let predictionSettings = loadPredictionSettings();
+    let previousPeriodNote = localStorage.getItem('foodPeriodAutoNote') || '';
+    const LIBRARY_KEY = 'foodLibrary';
+    let foodLibrary = loadFoodLibrary();
+    let editingFoodId = null;
 
     function loadItems() {
       try {
@@ -402,21 +600,25 @@
       return Number.isInteger(number) ? String(number) : number.toFixed(1);
     }
 
+    function quickFoodKey(food) { return JSON.stringify([food.name, food.unit]); }
+    function getQuickFoods() {
+      const template = settings.templates.find(t => t.id === getRequiredElement('templateSelect').value);
+      const foods = [...(template ? template.foods : []), ...items];
+      return [...new Map(foods.map(f => [quickFoodKey(f), f])).values()];
+    }
+    function selectedQuickFood() {
+      return getQuickFoods().find(f => quickFoodKey(f) === getRequiredElement('quickItemSelect').value);
+    }
     function renderSelectOptions() {
-      const quickItemSelect = getRequiredElement("quickItemSelect");
-      quickItemSelect.innerHTML = "";
-
-      if (items.length === 0) {
-        quickItemSelect.innerHTML = '<option value="">選擇食物</option>';
-        return;
-      }
-
-      items.forEach((item, index) => {
-        const option = document.createElement("option");
-        option.value = String(index);
-        option.textContent = `${item.name}（${formatWeight(item.weight)}g）`;
-        quickItemSelect.appendChild(option);
-      });
+      const select = getRequiredElement('quickItemSelect'), previous = select.value;
+      const foods = getQuickFoods();
+      select.replaceChildren(...foods.map(food => {
+        const recorded = items.find(i => quickFoodKey(i) === quickFoodKey(food));
+        return new Option(`${food.name}（${formatWeight(recorded ? recorded.weight : 0)}${food.unit}）`, quickFoodKey(food));
+      }));
+      if (!foods.length) select.append(new Option('請選擇模板或新增食物', ''));
+      if (foods.some(f => quickFoodKey(f) === previous)) select.value = previous;
+      syncQuickUnit();
     }
 
     function renderItems() {
@@ -437,7 +639,7 @@
         itemDiv.innerHTML = `
           <div>
             <div class="item-name">${escapeHtml(item.name)}</div>
-            <div class="item-weight">${formatWeight(item.weight)} g</div>
+            <div class="item-weight">${formatWeight(item.weight)} ${escapeHtml(item.unit)} · ${itemCalorieText(item)}</div>
           </div>
           <div class="item-actions" onclick="event.stopPropagation()">
             <button type="button" class="small-btn delete" onclick="deleteItem(${index})">刪除</button>
@@ -458,24 +660,27 @@
       const weightInput = getRequiredElement("itemWeight");
 
       const name = nameInput.value.trim();
-      const weight = normalizeWeight(weightInput.value);
+      const magnitude = normalizeWeight(weightInput.value);
+      const weight = magnitude * Number(getRequiredElement("itemSign").value);
+      const unit = getRequiredElement("itemUnit").value;
 
       if (name === "") {
         alert("請輸入食物名稱");
         return;
       }
 
-      if (!Number.isFinite(weight) || weight <= 0) {
+      if (!Number.isFinite(magnitude) || magnitude <= 0) {
         alert("請輸入大於 0 的重量");
         return;
       }
 
-      const existingItem = items.find(item => item.name === name);
+      const existingItem = items.find(item => item.name === name && item.unit === unit);
 
       if (existingItem) {
-        existingItem.weight = normalizeWeight(Number(existingItem.weight) + weight);
+        existingItem.weight = Math.max(0, normalizeWeight(Number(existingItem.weight) + weight));
       } else {
-        items.push({ name: name, weight: weight });
+        if (weight < 0) { alert("請先新增相同名稱與單位的食物，再減少數量"); return; }
+        items.push({ name, weight, unit });
       }
 
       nameInput.value = "";
@@ -503,7 +708,7 @@
         return;
       }
 
-      const amount = normalizeWeight(prompt(`調整「${items[index].name}」的重量(g)\n例如輸入 10.5 或 -20`));
+      const amount = normalizeWeight(prompt(`調整「${items[index].name}」的數量(${items[index].unit})\n例如輸入 10.5 或 -20`));
 
       if (!Number.isFinite(amount) || amount === 0) {
         return;
@@ -513,25 +718,20 @@
     }
 
     function addQuickWeight() {
-      const quickItemSelect = getRequiredElement("quickItemSelect");
-      const quickWeightInput = getRequiredElement("quickWeight");
-
-      const index = Number(quickItemSelect.value);
-      const amount = normalizeWeight(quickWeightInput.value);
-
-      if (!items[index]) {
-        alert("請先選擇食物");
-        return;
-      }
-
-      if (!Number.isFinite(amount) || amount === 0) {
-        alert("請輸入要調整的重量，例如 20、10.5 或 -20");
-        return;
-      }
-
-      changeWeight(index, amount);
-      quickWeightInput.value = "";
-      quickWeightInput.focus();
+      const food = selectedQuickFood();
+      const input = getRequiredElement('quickWeight');
+      const magnitude = normalizeWeight(input.value);
+      const amount = magnitude * Number(getRequiredElement('quickSign').value);
+      if (!food) { templateNotice('請先選擇模板或新增食物，再選擇品項。'); return; }
+      if (!Number.isFinite(magnitude) || magnitude <= 0) { templateNotice('請輸入大於 0 的數量。'); return; }
+      if (getRequiredElement('quickUnit').value !== food.unit) { templateNotice('請使用品項原有的單位；不同單位不會自動換算。'); return; }
+      const existing = items.find(i => quickFoodKey(i) === quickFoodKey(food));
+      if (!existing && amount < 0) { templateNotice('此品項目前為 0，請先增加數量。'); return; }
+      if (existing) existing.weight = Math.max(0, normalizeWeight(Number(existing.weight) + amount));
+      else items.push({ name: food.name, unit: food.unit, weight: amount });
+      renderItems(); input.value = ''; input.focus();
+      const updated = items.find(i => quickFoodKey(i) === quickFoodKey(food));
+      templateNotice(`${food.name}已更新為 ${formatWeight(updated.weight)}${food.unit}。`);
     }
 
     function deleteItem(index) {
@@ -550,11 +750,14 @@
     }
 
     function getFoodResultText() {
-      return items.map(item => `${item.name}${formatWeight(item.weight)}g`).join("、");
+      return items.map(item => `${item.name}${formatWeight(item.weight)}${item.unit}`).join("、");
     }
 
     function updateResultText() {
-      getRequiredElement("resultText").value = getFoodResultText();
+      const foodText = getFoodResultText();
+      const summary = calorieSummary(items);
+      getRequiredElement("resultText").value = foodText ? foodText + "\n預估熱量：" + calorieSummaryText(summary) : "";
+      getRequiredElement("currentCalories").textContent = items.length ? "當餐預估熱量：" + calorieSummaryText(summary) : "新增食物後顯示當餐預估熱量";
     }
 
     async function copyText() {
@@ -593,16 +796,18 @@
         "【體重記錄】",
         `日期：${getFormattedDate()}`,
         `體重：${weight === "無" ? "無" : `${weight} kg`}`,
+        `體脂：${getFieldValue("bodyFat") === "無" ? "無" : getFieldValue("bodyFat") + " %"}`,
         `測量時間：${time}`,
         `排便：${getFieldValue("bowel")}`,
         `前晚有無進食：${getFieldValue("lateMeal")}`,
         "【飲食記錄】都是熟重",
-        `早餐：${getFieldValue("breakfast")}`,
-        `午餐：${getFieldValue("lunch")}`,
-        `晚餐：${getFieldValue("dinner")}`,
-        `水果：${getFieldValue("fruit")}`,
-        `點心：${getFieldValue("snack")}`,
-        `其他：${getFieldValue("otherFood")}`,
+        `早餐：${getFieldValue("breakfast")}${mealCalorieSuffix("breakfast")}`,
+        `午餐：${getFieldValue("lunch")}${mealCalorieSuffix("lunch")}`,
+        `晚餐：${getFieldValue("dinner")}${mealCalorieSuffix("dinner")}`,
+        `水果：${getFieldValue("fruit")}${mealCalorieSuffix("fruit")}`,
+        `點心：${getFieldValue("snack")}${mealCalorieSuffix("snack")}`,
+        `其他：${getFieldValue("otherFood")}${mealCalorieSuffix("otherFood")}`,
+        dailyCalorieText(),
         "【喝水量】",
         `純水：${getFieldValue("water")}`,
         `無糖茶：${getFieldValue("tea")}`,
@@ -616,6 +821,8 @@
       const reportText = document.getElementById("reportText");
       if (reportText) {
         reportText.value = buildReportText();
+        MEAL_FIELDS.forEach(id => { const hint = document.getElementById(id + 'Calories'); if (hint) hint.textContent = mealCalorieSuffix(id).replace(/^\n/, ''); });
+        const total = document.getElementById('dailyCalories'); if (total) total.textContent = dailyCalorieText();
       }
     }
 
@@ -626,6 +833,10 @@
         return;
       }
       getRequiredElement(fieldId).value = foodText;
+      const date = getRequiredElement('reportDate').value;
+      mealCalories[date] ||= {};
+      mealCalories[date][fieldId] = {text:foodText, ...calorieSummary(items)};
+      saveMealCalories();
       saveReportFields();
       updateReportText();
     }
@@ -647,40 +858,53 @@
     }
 
     function saveReportFields() {
+      const date = activeReportDate || getRequiredElement('reportDate').value;
+      if (!validPeriodDate(date)) return false;
       const fields = {};
-      document.querySelectorAll("[data-report-field]").forEach(field => {
-        fields[field.id] = field.value;
-      });
-      localStorage.setItem(REPORT_STORAGE_KEY, JSON.stringify(fields));
-    }
-
-    function loadReportFields() {
-      const today = new Date();
-      const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-      getRequiredElement("reportDate").value = localDate;
-
+      document.querySelectorAll('[data-report-field]').forEach(field => { fields[field.id] = field.id === 'reportDate' ? date : field.value; });
+      const entry = {fields, autoNote:previousPeriodNote, updatedAt:new Date().toISOString()};
+      const next = {...dailyJournal, [date]:entry};
       try {
-        const fields = JSON.parse(localStorage.getItem(REPORT_STORAGE_KEY));
-        if (fields && typeof fields === "object") {
-          Object.entries(fields).forEach(([id, value]) => {
-            const field = document.getElementById(id);
-            if (field) field.value = value;
-          });
-        }
-      } catch (error) {
-        return;
-      }
+        localStorage.setItem(JOURNAL_KEY, JSON.stringify(next));
+        localStorage.setItem(REPORT_STORAGE_KEY, JSON.stringify(fields));
+      } catch(e) { getRequiredElement('journalStatus').textContent='儲存失敗，請先下載備份並確認瀏覽器儲存空間。'; return false; }
+      dailyJournal = next;
+      getRequiredElement('journalStatus').textContent = date + ' 已儲存於此裝置';
+      if (typeof queueCloudSync === 'function') queueCloudSync();
+      return true;
     }
-
+    function loadReportFields() {
+      let legacy = null;
+      try { legacy = JSON.parse(localStorage.getItem(REPORT_STORAGE_KEY)); } catch(e) {}
+      const date = legacy && validPeriodDate(legacy.reportDate) ? legacy.reportDate : localDateText(new Date());
+      if (legacy && !dailyJournal[date]) {
+        dailyJournal[date] = {fields:legacy, autoNote:previousPeriodNote, updatedAt:new Date().toISOString()};
+        localStorage.setItem(JOURNAL_KEY,JSON.stringify(dailyJournal));
+      }
+      loadJournalDate(date);
+    }
+    function loadJournalDate(date) {
+      activeReportDate = date;
+      const entry = dailyJournal[date];
+      document.querySelectorAll('[data-report-field]').forEach(field => {
+        const fallback = field.id === 'reportDate' ? date : ['bowel', ...MEAL_FIELDS, 'tea'].includes(field.id) ? '無' : field.id === 'lateMeal' ? '有' : '';
+        field.value = entry?.fields?.[field.id] ?? fallback;
+      });
+      getRequiredElement('reportDate').value = date;
+      previousPeriodNote = entry?.autoNote || '';
+      syncPeriodNote(); updateReportText();
+    }
+    function switchReportDate(date) {
+      if (!validPeriodDate(date)) { getRequiredElement('reportDate').value = activeReportDate; return; }
+      if (date !== activeReportDate && !saveReportFields()) { getRequiredElement('reportDate').value = activeReportDate; return; }
+      loadJournalDate(date); renderPeriodCalendar(); renderJournal();
+    }
     function bindReportFields() {
-      document.querySelectorAll("[data-report-field]").forEach(field => {
-        field.addEventListener("input", () => {
-          saveReportFields();
-          updateReportText();
-        });
-        field.addEventListener("change", () => {
-          saveReportFields();
-          updateReportText();
+      document.querySelectorAll('[data-report-field]').forEach(field => {
+        if (field.id === 'reportDate') { field.addEventListener('change', () => switchReportDate(field.value)); return; }
+        field.addEventListener('input', () => {
+          if (MEAL_FIELDS.includes(field.id)) invalidateMealCalories(field.id);
+          saveReportFields(); updateReportText();
         });
       });
     }
@@ -694,7 +918,359 @@
         .replaceAll("'", "&#039;");
     }
 
+    function loadSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+        if (saved && Array.isArray(saved.units) && saved.units.some(u => typeof u === 'string' && u.trim())) {
+          return { units: [...new Set(saved.units.filter(u => typeof u === 'string' && u.trim()))], templates: Array.isArray(saved.templates) ? saved.templates.filter(t => t && typeof t.name === 'string' && Array.isArray(t.foods)) : [] };
+        }
+      } catch (e) {}
+      return { units: ['g', 'ml', '份', '個'], templates: [] };
+    }
+    function persistSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+    function templateNotice(message) {
+      getRequiredElement('templateStatus').textContent = message;
+    }
+    function showPage(page) {
+      getRequiredElement('recordPage').hidden = page !== 'record';
+      getRequiredElement('settingsPage').hidden = page !== 'settings';
+      getRequiredElement('libraryPage').hidden = page !== 'library';
+      getRequiredElement('periodPage').hidden = page !== 'period';
+      getRequiredElement('journalPage').hidden = page !== 'journal';
+      getRequiredElement('syncPage').hidden = page !== 'sync';
+      if (page === 'journal') renderJournal();
+      ['record', 'settings', 'library', 'period', 'journal', 'sync'].forEach(p => {
+        const tab = getRequiredElement(p + 'Tab');
+        if (p === page) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
+      });
+    }
+    function fillUnits(select, selected, extras = []) {
+      const units = [...new Set([...settings.units, ...extras, ...(selected ? [selected] : [])])];
+      select.replaceChildren(...units.map(unit => new Option(unit, unit)));
+      select.value = selected || settings.units[0];
+    }
+    function syncQuickUnit() {
+      const item = selectedQuickFood();
+      fillUnits(getRequiredElement('quickUnit'), item ? item.unit : settings.units[0]);
+    }
+    function saveUnits() {
+      const units = [...new Set(getRequiredElement('unitSettings').value.split(/\n|,|，/).map(u => u.trim()).filter(Boolean))];
+      if (!units.length) { alert('請至少設定一個單位'); return; }
+      settings.units = units;
+      fillUnits(getRequiredElement('foodUnit'), getRequiredElement('foodUnit').value);
+      persistSettings();
+      fillUnits(getRequiredElement('itemUnit'));
+      syncQuickUnit();
+      document.querySelectorAll('#templateEditor select').forEach(s => fillUnits(s, s.value));
+      getRequiredElement('unitSettings').value = units.join('\n');
+      alert('單位已儲存');
+    }
+    function addTemplateRow(food = {}) {
+      const row = document.createElement('div'); row.className = 'template-row';
+      const name = document.createElement('input'); name.placeholder = '食物名稱'; name.setAttribute('aria-label', '模板食物名稱'); name.value = food.name || '';
+      const unit = document.createElement('select'); unit.setAttribute('aria-label', '模板食物單位'); fillUnits(unit, food.unit);
+      const remove = document.createElement('button'); remove.className = 'small-btn secondary'; remove.textContent = '移除'; remove.onclick = () => row.remove();
+      row.append(name, unit, remove); getRequiredElement('templateEditor').append(row);
+    }
+    function resetTemplateEditor() {
+      editingTemplateId = null; getRequiredElement('templateName').value = ''; getRequiredElement('templateEditor').replaceChildren(); addTemplateRow();
+    }
+    function saveTemplate() {
+      const name = getRequiredElement('templateName').value.trim();
+      const rows = [...document.querySelectorAll('#templateEditor .template-row')];
+      const foods = rows.map(row => ({name: row.querySelector('input').value.trim(), unit: row.querySelector('select').value}));
+      if (!name || !foods.length || foods.some(f => !f.name)) { alert('請填寫模板名稱與每項食物名稱'); return; }
+      if (settings.templates.some(t => t.name === name && t.id !== editingTemplateId)) { alert('模板名稱已存在，請編輯原模板或使用其他名稱'); return; }
+      const template = { id: editingTemplateId || crypto.randomUUID(), name, foods };
+      const index = settings.templates.findIndex(t => t.id === editingTemplateId);
+      if (index < 0) settings.templates.push(template); else settings.templates[index] = template;
+      persistSettings(); renderTemplates(); resetTemplateEditor();
+      getRequiredElement('templateSelect').value = template.id;
+      loadQuickTemplate(); showPage('record');
+      templateNotice('已儲存「' + template.name + '」，請在下方選擇品項，使用 + / − 調整數量。');
+      getRequiredElement('templateSelect').scrollIntoView({ block: 'center' });
+    }
+    function renderTemplates() {
+      const select = getRequiredElement('templateSelect'), previous = select.value;
+      select.replaceChildren(new Option('選擇模板', ''), ...settings.templates.map(t => new Option(t.name, t.id)));
+      if (settings.templates.some(t => t.id === previous)) select.value = previous;
+      const list = getRequiredElement('savedTemplates'); list.replaceChildren();
+      settings.templates.forEach(t => {
+        const row = document.createElement('div'); row.className = 'field';
+        const title = document.createElement('p'); title.textContent = t.name + '：' + t.foods.map(f => f.name + ' (' + f.unit + ')').join('、');
+        const edit = document.createElement('button'); edit.textContent = '編輯'; edit.className = 'secondary'; edit.onclick = () => {
+          editingTemplateId = t.id; getRequiredElement('templateName').value = t.name; getRequiredElement('templateEditor').replaceChildren(); t.foods.forEach(addTemplateRow);
+        };
+        const remove = document.createElement('button'); remove.textContent = '刪除模板'; remove.className = 'secondary'; remove.onclick = () => {
+          if (!confirm('刪除「' + t.name + '」模板？')) return;
+          settings.templates = settings.templates.filter(x => x.id !== t.id); persistSettings(); if (editingTemplateId === t.id) resetTemplateEditor(); renderTemplates();
+        };
+        row.append(title, edit, remove); list.append(row);
+      }); loadQuickTemplate();
+    }
+    function loadQuickTemplate() {
+      renderSelectOptions();
+      const template = settings.templates.find(t => t.id === getRequiredElement('templateSelect').value);
+      templateNotice(template ? '已載入「' + template.name + '」品項，請選擇食物並使用 + / − 調整重量或個數。' : '選擇模板可載入常用食物，也可調整已加入的品項。');
+    }
+    function clearReportField(id) { invalidateMealCalories(id); getRequiredElement(id).value = ''; saveReportFields(); updateReportText(); }
+    function initializeSettings() {
+      getRequiredElement('unitSettings').value = settings.units.join('\n'); fillUnits(getRequiredElement('itemUnit')); syncQuickUnit();
+      getRequiredElement('quickItemSelect').addEventListener('change', syncQuickUnit);
+      resetTemplateEditor(); renderTemplates();
+    }
+
+    function loadFoodLibrary() {
+      try { const saved = JSON.parse(localStorage.getItem(LIBRARY_KEY)); return Array.isArray(saved) ? saved.filter(f => f && typeof f.id === 'string' && typeof f.name === 'string' && typeof f.unit === 'string') : []; } catch(e) { return []; }
+    }
+    function resetLibraryEditor() {
+      editingFoodId = null;
+      ['foodName','foodCalories','foodSource'].forEach(id => getRequiredElement(id).value = '');
+      fillUnits(getRequiredElement('foodUnit'));
+      getRequiredElement('foodBasis').value = ['g','ml'].includes(getRequiredElement('foodUnit').value) ? '100' : '1';
+      getRequiredElement('saveFoodButton').textContent = '儲存品項';
+      getRequiredElement('libraryStatus').textContent = '';
+    }
+    function saveLibraryFood() {
+      const name = getRequiredElement('foodName').value.trim(), unit = getRequiredElement('foodUnit').value;
+      const basis = Number(getRequiredElement('foodBasis').value), rawCalories = getRequiredElement('foodCalories').value;
+      const calories = rawCalories === '' ? null : Number(rawCalories);
+      const status = getRequiredElement('libraryStatus');
+      if (!name || !unit) { status.textContent = '請填寫品項名稱及單位。'; return; }
+      if (!Number.isFinite(basis) || basis <= 0 || getRequiredElement('foodCalories').validity.badInput || (calories !== null && (!Number.isFinite(calories) || calories < 0))) { status.textContent = '熱量對應數量須大於 0；大卡須為 0 或正數，也可留白。'; return; }
+      if (foodLibrary.some(f => f.name === name && f.unit === unit && f.id !== editingFoodId)) { status.textContent = '相同名稱與單位已存在，請編輯原品項。'; return; }
+      const food = { id: editingFoodId || crypto.randomUUID(), name, unit, basis, calories, source: getRequiredElement('foodSource').value.trim() };
+      const next = foodLibrary.filter(f => f.id !== food.id).concat(food);
+      try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(next)); } catch(e) { status.textContent = '儲存失敗，請確認瀏覽器允許儲存或有足夠空間。'; return; }
+      foodLibrary = next; renderLibrary(); resetLibraryEditor(); status.textContent = '已儲存「' + name + '」，可在記錄頁及模板選用。';
+    }
+    function renderLibrary() {
+      ['libraryPick','templateLibraryPick'].forEach(id => {
+        const select = getRequiredElement(id), previous = select.value;
+        select.replaceChildren(new Option(foodLibrary.length ? '選擇已儲存品項' : '尚無品項，請到品項資料庫新增', ''), ...foodLibrary.map(f => new Option(f.name + '（' + f.unit + '）', f.id)));
+        if (foodLibrary.some(f => f.id === previous)) select.value = previous;
+      });
+      renderLibraryList();
+      renderItems();
+    }
+    function renderLibraryList() {
+      const list = getRequiredElement('foodLibraryList'); list.replaceChildren();
+      const search = getRequiredElement('foodSearch').value.trim().toLocaleLowerCase();
+      const matches = foodLibrary.filter(f => (f.name + ' ' + (f.source || '')).toLocaleLowerCase().includes(search));
+      if (!matches.length) { const empty = document.createElement('p'); empty.className = 'hint'; empty.textContent = foodLibrary.length ? '沒有符合的品項。' : '還沒有常用品項，先儲存第一份美味吧！'; list.append(empty); }
+      matches.forEach(f => {
+        const card = document.createElement('div'); card.className = 'library-card';
+        const title = document.createElement('strong'); title.textContent = f.name + ' · ' + f.unit;
+        const details = document.createElement('p'); details.className = 'hint'; details.textContent = (f.calories == null ? '熱量未設定' : '每 ' + f.basis + f.unit + '：' + f.calories + ' 大卡') + (f.source ? '｜' + f.source : '');
+        const actions = document.createElement('div'); actions.className = 'library-actions';
+        const button = (label, run) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'small-btn secondary'; b.textContent = label; b.onclick = run; return b; };
+        actions.append(button('選用', () => { getRequiredElement('libraryPick').value = f.id; useLibraryFood(); showPage('record'); getRequiredElement('itemWeight').focus(); }), button('編輯', () => {
+          editingFoodId = f.id; getRequiredElement('foodName').value = f.name; fillUnits(getRequiredElement('foodUnit'),f.unit); getRequiredElement('foodBasis').value = f.basis; getRequiredElement('foodCalories').value = f.calories == null ? '' : f.calories; getRequiredElement('foodSource').value = f.source || ''; getRequiredElement('saveFoodButton').textContent = '儲存修改'; getRequiredElement('foodName').focus();
+        }), button('刪除', () => {
+          if (!confirm('刪除資料庫中的「' + f.name + '」？既有記錄與模板會保留。')) return;
+          const next = foodLibrary.filter(x => x.id !== f.id);
+          try { localStorage.setItem(LIBRARY_KEY,JSON.stringify(next)); } catch(e) { getRequiredElement('libraryStatus').textContent = '無法儲存刪除結果，請稍後再試。'; return; }
+          foodLibrary = next; if (editingFoodId === f.id) resetLibraryEditor(); renderLibrary();
+        }));
+        card.append(title,details,actions); list.append(card);
+      });
+    }
+    function useLibraryFood() {
+      const food = foodLibrary.find(f => f.id === getRequiredElement('libraryPick').value); if (!food) return;
+      getRequiredElement('itemName').value = food.name; fillUnits(getRequiredElement('itemUnit'),food.unit); getRequiredElement('itemSign').value = '1'; getRequiredElement('itemWeight').focus();
+    }
+    function addLibraryToTemplate() {
+      const food = foodLibrary.find(f => f.id === getRequiredElement('templateLibraryPick').value);
+      if (!food) { alert('請先選擇資料庫品項'); return; }
+      const rows = [...document.querySelectorAll('#templateEditor .template-row')];
+      if (rows.some(r => r.querySelector('input').value.trim() === food.name && r.querySelector('select').value === food.unit)) { alert('此品項已在模板中'); return; }
+      const blank = rows.find(r => !r.querySelector('input').value.trim());
+      if (blank) { blank.querySelector('input').value = food.name; fillUnits(blank.querySelector('select'), food.unit); } else addTemplateRow(food);
+    }
+
+    function loadPeriods() {
+      try { const data = JSON.parse(localStorage.getItem(PERIOD_KEY)); return Array.isArray(data) ? data.filter(p => p && validPeriodDate(p.start) && (!p.end || (validPeriodDate(p.end) && p.end >= p.start))) : []; } catch(e) { return []; }
+    }
+    function validPeriodDate(value) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return false;
+      const date = new Date(value + 'T00:00:00Z');
+      return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10) === value;
+    }
+    function periodDayNumber(value) { return Date.parse(value + 'T00:00:00Z') / 86400000; }
+    function periodNoteFor(date) {
+      if (!validPeriodDate(date)) return '';
+      const latest = periods.filter(p => p.start <= date).sort((a,b) => b.start.localeCompare(a.start))[0];
+      if (!latest) return '';
+      return latest.end && date > latest.end ? '生理期後第' + (periodDayNumber(date) - periodDayNumber(latest.end)) + '天' : '生理期第' + (periodDayNumber(date) - periodDayNumber(latest.start) + 1) + '天';
+    }
+    function syncPeriodNote() {
+      const field = getRequiredElement('bodyNote');
+      let text = field.value;
+      if (previousPeriodNote && (text === previousPeriodNote || text.startsWith(previousPeriodNote + '\n'))) text = text.slice(previousPeriodNote.length).replace(/^\n/,'');
+      const next = periodNoteFor(getRequiredElement('reportDate').value);
+      field.value = [next, text].filter(Boolean).join('\n');
+      previousPeriodNote = next;
+      localStorage.setItem('foodPeriodAutoNote', next);
+      saveReportFields(); updateReportText();
+    }
+    function resetPeriodEditor() {
+      editingPeriodId = null; getRequiredElement('periodStart').value = ''; getRequiredElement('periodEnd').value = ''; getRequiredElement('savePeriodButton').textContent = '儲存生理期'; getRequiredElement('periodStatus').textContent = '';
+    }
+    function savePeriod() {
+      const start = getRequiredElement('periodStart').value, end = getRequiredElement('periodEnd').value;
+      const status = getRequiredElement('periodStatus');
+      if (!validPeriodDate(start) || (end && (!validPeriodDate(end) || end < start))) { status.textContent = '請填寫開始日期；最後一天不可早於開始日期。'; return; }
+      if (periods.some(p => p.id !== editingPeriodId && start <= (p.end || '9999-12-31') && p.start <= (end || '9999-12-31'))) { status.textContent = '日期與既有紀錄重疊，請編輯原紀錄，或先設定上一段的最後一天。'; return; }
+      const next = periods.filter(p => p.id !== editingPeriodId).concat({ id: editingPeriodId || crypto.randomUUID(), start, end });
+      try { localStorage.setItem(PERIOD_KEY,JSON.stringify(next)); } catch(e) { status.textContent = '儲存失敗，請確認瀏覽器允許儲存。'; return; }
+      periods = next; periodMonth = new Date(start + 'T00:00:00'); periodMonth.setDate(1);
+      resetPeriodEditor(); renderPeriods(); syncPeriodNote(); status.textContent = '已儲存，日誌備註已更新。';
+    }
+    function localDateText(date) { return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0'); }
+    function movePeriodMonth(amount) { periodMonth = new Date(periodMonth.getFullYear(),periodMonth.getMonth()+amount,1); renderPeriodCalendar(); }
+    function renderPeriodCalendar() {
+      renderPrediction();
+      const prediction = nextPeriodPrediction();
+      const year = periodMonth.getFullYear(), month = periodMonth.getMonth();
+      getRequiredElement('periodMonthTitle').textContent = year + '年 ' + (month+1) + '月';
+      const calendar = getRequiredElement('periodCalendar'); calendar.replaceChildren();
+      ['日','一','二','三','四','五','六'].forEach(day => { const label = document.createElement('span'); label.className = 'calendar-weekday'; label.textContent = day; calendar.append(label); });
+      for (let i=0; i<new Date(year,month,1).getDay(); i++) calendar.append(document.createElement('span'));
+      const today = localDateText(new Date());
+      for (let day=1; day<=new Date(year,month+1,0).getDate(); day++) {
+        const value = localDateText(new Date(year,month,day));
+        const button = document.createElement('button'); button.type = 'button'; button.textContent = day;
+        const active = periods.some(p => p.start <= value && value <= (p.end || today));
+        if (active) button.classList.add('period-day');
+        const predicted = prediction && !prediction.conflicts && value === prediction.date;
+        if (predicted) button.classList.add('predicted-day');
+        if (value === getRequiredElement('reportDate').value) button.classList.add('selected-day');
+        button.setAttribute('aria-label', value + (active ? '，生理期' : '') + (predicted ? '，預估開始日' : '') + '，開啟日誌');
+        button.onclick = () => { switchReportDate(value); showPage('record'); getRequiredElement('bodyNote').focus(); };
+        calendar.append(button);
+      }
+    }
+    function renderPeriods() {
+      renderPeriodCalendar();
+      const history = getRequiredElement('periodHistory'); history.replaceChildren();
+      if (!periods.length) { const text = document.createElement('p'); text.className='hint'; text.textContent='尚無紀錄，請先填寫開始日期。'; history.append(text); }
+      [...periods].sort((a,b)=>b.start.localeCompare(a.start)).forEach(p => {
+        const card = document.createElement('div'); card.className = 'library-card';
+        const title = document.createElement('p'); title.textContent = p.start + ' ～ ' + (p.end || '尚未結束');
+        const actions = document.createElement('div'); actions.className='library-actions';
+        const edit = document.createElement('button'); edit.className='small-btn secondary'; edit.textContent='編輯'; edit.onclick=()=>{ editingPeriodId=p.id; getRequiredElement('periodStart').value=p.start; getRequiredElement('periodEnd').value=p.end || ''; getRequiredElement('savePeriodButton').textContent='儲存修改'; getRequiredElement('periodStart').focus(); };
+        const remove = document.createElement('button'); remove.className='small-btn secondary'; remove.textContent='刪除'; remove.onclick=()=>{
+          if (!confirm('刪除這段生理期紀錄？')) return;
+          const next=periods.filter(x=>x.id!==p.id);
+          try { localStorage.setItem(PERIOD_KEY,JSON.stringify(next)); } catch(e) { getRequiredElement('periodStatus').textContent='無法儲存刪除結果，請稍後再試。'; return; }
+          periods=next; if(editingPeriodId===p.id) resetPeriodEditor(); renderPeriods(); syncPeriodNote();
+        };
+        actions.append(edit,remove); card.append(title,actions); history.append(card);
+      });
+    }
+
+    function loadMealCalories() {
+      try { const saved = JSON.parse(localStorage.getItem('foodMealCalories')); return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {}; } catch(e) { return {}; }
+    }
+    function saveMealCalories() { localStorage.setItem(MEAL_CALORIES_KEY,JSON.stringify(mealCalories)); }
+    function itemCalories(item) {
+      const food = foodLibrary.find(f => f.name === item.name && f.unit === item.unit);
+      if (!food || food.calories == null || !Number.isFinite(food.calories) || food.calories < 0 || !Number.isFinite(food.basis) || food.basis <= 0) return null;
+      const result = Number(item.weight) * food.calories / food.basis;
+      return Number.isFinite(result) && result >= 0 ? result : null;
+    }
+    function calorieNumber(value) { return String(Math.round(value * 10) / 10); }
+    function itemCalorieText(item) { const value = itemCalories(item); return value === null ? '熱量未設定' : '約 ' + calorieNumber(value) + ' 大卡'; }
+    function calorieSummary(foods) {
+      let total = 0, known = 0; const missing = [];
+      foods.filter(f => Number(f.weight) > 0).forEach(f => { const value = itemCalories(f); if (value === null) missing.push(f.name + '（' + f.unit + '）'); else { total += value; known++; } });
+      return {total, known, missing};
+    }
+    function calorieSummaryText(summary) {
+      const suffix = summary.missing.length ? '；未計入：' + summary.missing.join('、') : '';
+      if (!summary.known && summary.missing.length) return '尚無可計算的熱量' + suffix;
+      return (summary.missing.length ? '已知部分約 ' : '約 ') + calorieNumber(summary.total) + ' 大卡' + suffix;
+    }
+    function mealSnapshot(id) {
+      const snapshot = mealCalories[getRequiredElement('reportDate').value]?.[id];
+      if (!snapshot || snapshot.text !== getRequiredElement(id).value || !Number.isFinite(snapshot.total) || !Array.isArray(snapshot.missing)) return null;
+      return snapshot;
+    }
+    function mealCalorieSuffix(id) {
+      const text = getFieldValue(id);
+      if (text === '無') return '';
+      const snapshot = mealSnapshot(id);
+      return '\n預估熱量：' + (snapshot ? calorieSummaryText(snapshot) : '尚未計算（請從當餐食物套用）');
+    }
+    function dailyCalorieText() {
+      let total = 0, known = 0, entered = 0; const incomplete = [];
+      const labels = {breakfast:'早餐',lunch:'午餐',dinner:'晚餐',fruit:'水果',snack:'點心',otherFood:'其他'};
+      MEAL_FIELDS.forEach(id => {
+        if (getFieldValue(id) === '無') return;
+        entered++;
+        const snapshot = mealSnapshot(id);
+        if (!snapshot) { incomplete.push(labels[id] + '尚未計算'); return; }
+        total += snapshot.total; known += snapshot.known;
+        if (snapshot.missing.length) incomplete.push(labels[id] + '有未設定熱量品項');
+      });
+      if (!entered) return '當日預估熱量：尚無飲食紀錄';
+      const amount = !known && incomplete.length ? '尚無可計算的熱量' : (incomplete.length ? '已知部分約 ' : '約 ') + calorieNumber(total) + ' 大卡';
+      return '當日預估熱量：' + amount + (incomplete.length ? '（不含：' + incomplete.join('、') + '）' : '');
+    }
+    function invalidateMealCalories(id) {
+      if (!MEAL_FIELDS.includes(id)) return;
+      const date = getRequiredElement('reportDate').value;
+      if (mealCalories[date]?.[id]) { delete mealCalories[date][id]; saveMealCalories(); }
+    }
+
+    function loadPredictionSettings() {
+      try { const saved = JSON.parse(localStorage.getItem('foodPeriodPrediction')); if (saved && Number.isInteger(saved.days) && saved.days > 0 && saved.days <= 365) return {days:saved.days, mode:saved.mode === 'average' ? 'average' : 'manual'}; } catch(e) {}
+      return {days:28, mode:'manual'};
+    }
+    function nextPeriodPrediction() {
+      const sorted = [...periods].sort((a,b)=>a.start.localeCompare(b.start));
+      if (!sorted.length) return null;
+      let days = predictionSettings.days, count = 0;
+      if (predictionSettings.mode === 'average') {
+        const starts = sorted.slice(-7);
+        const intervals = starts.slice(1).map((p,i)=>periodDayNumber(p.start)-periodDayNumber(starts[i].start)).filter(n=>n>0);
+        count = intervals.length;
+        if (!count) return null;
+        days = Math.round(intervals.reduce((a,b)=>a+b,0)/count);
+      }
+      const latest = sorted[sorted.length-1];
+      const date = new Date((periodDayNumber(latest.start)+days)*86400000).toISOString().slice(0,10);
+      return {date, days, count, conflicts:!!latest.end && date <= latest.end};
+    }
+    function savePredictionSettings() {
+      const days = Number(getRequiredElement('predictionDays').value), mode = getRequiredElement('predictionMode').value;
+      if (!Number.isInteger(days) || days < 1 || days > 365) { getRequiredElement('predictionStatus').textContent='請輸入 1～365 的整數天數。'; return; }
+      const next = {days,mode};
+      try { localStorage.setItem('foodPeriodPrediction',JSON.stringify(next)); } catch(e) { getRequiredElement('predictionStatus').textContent='無法儲存設定，請稍後再試。'; return; }
+      predictionSettings = next; renderPeriodCalendar(); getRequiredElement('predictionStatus').textContent='預估設定已儲存。';
+    }
+    function renderPrediction() {
+      const prediction = nextPeriodPrediction(), output = getRequiredElement('predictionResult');
+      getRequiredElement('viewPredictionButton').disabled = !prediction || prediction.conflicts;
+      if (!periods.length) { output.textContent='請先儲存一次生理期的開始日期。'; return; }
+      if (!prediction) { output.textContent='平均週期需要至少兩次開始日期；目前可改用自訂週期。'; return; }
+      if (prediction.conflicts) { output.textContent='預估日期落在已記錄的生理期內，請檢查週期天數或日期。'; return; }
+      output.textContent='下次預估開始日：' + prediction.date + '（' + (prediction.count ? '最近 ' + prediction.count + ' 個週期間隔平均 ' : '自訂週期 ') + prediction.days + ' 天）';
+      if (prediction.date < localDateText(new Date())) output.textContent += '。此日期已過，請補登實際開始日或調整設定。';
+    }
+    function viewPredictionMonth() {
+      const prediction = nextPeriodPrediction(); if (!prediction || prediction.conflicts) return;
+      periodMonth = new Date(prediction.date+'T00:00:00'); periodMonth.setDate(1); renderPeriodCalendar(); getRequiredElement('periodMonthTitle').scrollIntoView({block:'center'});
+    }
+
+    initializeSettings();
+    getRequiredElement("predictionMode").value = predictionSettings.mode;
+    getRequiredElement("predictionDays").value = predictionSettings.days;
+    resetLibraryEditor();
+    renderLibrary();
     loadReportFields();
+    syncPeriodNote();
+    renderPeriods();
     bindReportFields();
     renderItems();
     updateReportText();
@@ -705,3 +1281,4 @@
   </script>
 </body>
 </html>
+

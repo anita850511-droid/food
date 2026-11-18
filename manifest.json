@@ -4,14 +4,22 @@
   "description": "用日期整理每天的食物、份量與備註。",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4f1ea",
-  "theme_color": "#27665b",
+  "background_color": "#fff4ee",
+  "theme_color": "#fff4ee",
   "icons": [
     {
       "src": "icon.svg",
-      "sizes": "any",
+      "sizes": "192x192 512x512 any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "app-icon.png",
+      "sizes": "449x445",
+      "type": "image/png",
+      "purpose": "any"
     }
-  ]
+  ],
+  "id": "./",
+  "scope": "./"
 }
