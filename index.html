@@ -355,7 +355,7 @@
       
       <p id="templateStatus" class="hint" role="status" aria-live="polite"></p>
       
-      <button class="secondary" style="margin-top:10px" onclick="showPage('settings')">建立／管理模板</button>
+
       <div class="field" style="margin-top:20px">
         <label for="quickItemSelect">選擇品項</label>
       </div>
@@ -474,8 +474,16 @@
       </div>
 
       <div class="field">
+        <div class="field-heading"><label for="periodNote">生理期</label><button class="small-btn secondary" type="button" onclick="clearReportField('periodNote')" aria-label="清除生理期">清除</button></div>
+        <textarea id="periodNote" data-report-field></textarea>
+      </div>
+      <div class="field">
+        <div class="field-heading"><label for="exercise">運動</label><button class="small-btn secondary" type="button" onclick="clearReportField('exercise')" aria-label="清除運動">清除</button></div>
+        <textarea id="exercise" data-report-field></textarea>
+      </div>
+      <div class="field">
         <div class="field-heading"><label for="bodyNote">備註</label><button class="small-btn secondary" type="button" onclick="clearReportField('bodyNote')" aria-label="清除備註">清除</button></div>
-        <textarea id="bodyNote" placeholder="身體感覺、心情、運動量、特殊狀況等" data-report-field></textarea>
+        <textarea id="bodyNote" placeholder="身體感覺、心情、特殊狀況等" data-report-field></textarea>
       </div>
 
       <p id="dailyCalories" class="calorie-total"></p><p class="hint">每個日期獨立保存。合計六個飲食欄位，不含飲水。手動修改餐別文字後須重新套用食物，才能更新該餐熱量。</p>
@@ -502,7 +510,7 @@
       <section class="form-card"><h2>📦 下載備份</h2><p class="hint">備份包含飲食、日記、體重、生理期、模板與品項資料。不包含登入資訊，請妥善保存備份檔。</p><button onclick="exportBackup()">下載完整備份（JSON）</button><div class="field" style="margin-top:16px"><label for="backupFile">選擇要還原的備份</label><input id="backupFile" type="file" accept="application/json,.json" onchange="previewBackup(this)"></div><p id="backupStatus" class="hint" role="status"></p><button id="restoreBackupButton" class="secondary" disabled onclick="restoreBackup()">還原此備份</button></section>
     </div>
     <div id="periodPage" hidden>
-      <section class="form-card"><h2>🌷 生理期日曆</h2><p class="hint">記下開始與最後一天，日誌備註會依日期自動帶入。尚未結束時，最後一天可留白。</p>
+      <section class="form-card"><h2>🌷 生理期日曆</h2><p class="hint">記下開始與最後一天，生理期欄位會依日期自動帶入。尚未結束時，最後一天可留白。</p>
         <div class="two-col"><div class="field"><label for="periodStart">開始日期（第1天）</label><input id="periodStart" type="date"></div><div class="field"><label for="periodEnd">最後一天（選填）</label><input id="periodEnd" type="date"></div></div>
         <div class="two-col"><button id="savePeriodButton" onclick="savePeriod()">儲存生理期</button><button class="secondary" onclick="resetPeriodEditor()">新增一段紀錄</button></div><p id="periodStatus" class="hint" role="status" aria-live="polite"></p>
       </section>
@@ -512,7 +520,7 @@
         <button onclick="savePredictionSettings()">儲存預估設定</button><p id="predictionStatus" class="hint" role="status"></p><p id="predictionResult" class="calorie-total" aria-live="polite"></p><button id="viewPredictionButton" class="secondary" onclick="viewPredictionMonth()">查看預估月份</button>
         <p class="hint">日期僅供參考，不作為避孕或排卵判斷依據。預估不會寫入實際紀錄或備註。</p>
       </section>
-      <section class="list-card"><div class="calendar-heading"><button class="small-btn secondary" aria-label="上個月" onclick="movePeriodMonth(-1)">‹</button><h2 id="periodMonthTitle"></h2><button class="small-btn secondary" aria-label="下個月" onclick="movePeriodMonth(1)">›</button></div><div class="period-calendar" id="periodCalendar"></div><p class="hint">粉色：生理期　紫色虛線：預估開始日　圓框：日誌日期。點日期可開啟該日誌並帶入備註。</p></section>
+      <section class="list-card"><div class="calendar-heading"><button class="small-btn secondary" aria-label="上個月" onclick="movePeriodMonth(-1)">‹</button><h2 id="periodMonthTitle"></h2><button class="small-btn secondary" aria-label="下個月" onclick="movePeriodMonth(1)">›</button></div><div class="period-calendar" id="periodCalendar"></div><p class="hint">粉色：生理期　紫色虛線：預估開始日　圓框：日誌日期。點日期可開啟該日誌並帶入生理期欄位。</p></section>
       <section class="list-card"><h2>生理期紀錄</h2><div id="periodHistory"></div></section>
       <p class="hint">實際紀錄與預估設定都保存在目前瀏覽器。</p>
     </div>
@@ -756,7 +764,7 @@
     function updateResultText() {
       const foodText = getFoodResultText();
       const summary = calorieSummary(items);
-      getRequiredElement("resultText").value = foodText ? foodText + "\n預估熱量：" + calorieSummaryText(summary) : "";
+      getRequiredElement("resultText").value = foodText;
       getRequiredElement("currentCalories").textContent = items.length ? "當餐預估熱量：" + calorieSummaryText(summary) : "新增食物後顯示當餐預估熱量";
     }
 
@@ -801,19 +809,20 @@
         `排便：${getFieldValue("bowel")}`,
         `前晚有無進食：${getFieldValue("lateMeal")}`,
         "【飲食記錄】都是熟重",
-        `早餐：${getFieldValue("breakfast")}${mealCalorieSuffix("breakfast")}`,
-        `午餐：${getFieldValue("lunch")}${mealCalorieSuffix("lunch")}`,
-        `晚餐：${getFieldValue("dinner")}${mealCalorieSuffix("dinner")}`,
-        `水果：${getFieldValue("fruit")}${mealCalorieSuffix("fruit")}`,
-        `點心：${getFieldValue("snack")}${mealCalorieSuffix("snack")}`,
-        `其他：${getFieldValue("otherFood")}${mealCalorieSuffix("otherFood")}`,
-        dailyCalorieText(),
+        `早餐：${getFieldValue("breakfast")}`,
+        `午餐：${getFieldValue("lunch")}`,
+        `晚餐：${getFieldValue("dinner")}`,
+        `水果：${getFieldValue("fruit")}`,
+        `點心：${getFieldValue("snack")}`,
+        `其他：${getFieldValue("otherFood")}`,
         "【喝水量】",
         `純水：${getFieldValue("water")}`,
         `無糖茶：${getFieldValue("tea")}`,
         "",
+        `生理期：${getFieldValue("periodNote")}`,
+        `運動：${getFieldValue("exercise")}`,
         "【備註】",
-        `身體感覺、心情、運動量、特殊狀況等：${getFieldValue("bodyNote")}`
+        `身體感覺、心情、特殊狀況等：${getFieldValue("bodyNote")}`
       ].join("\n");
     }
 
@@ -897,7 +906,18 @@
     function switchReportDate(date) {
       if (!validPeriodDate(date)) { getRequiredElement('reportDate').value = activeReportDate; return; }
       if (date !== activeReportDate && !saveReportFields()) { getRequiredElement('reportDate').value = activeReportDate; return; }
-      loadJournalDate(date); renderPeriodCalendar(); renderJournal();
+      if (date === activeReportDate) return;
+      const sourceDate = activeReportDate;
+      const carry = confirm('是否將當前飲食紀錄帶入新日期？\n確定：帶入六個飲食欄位（取代新日期原有的飲食紀錄）。\n取消：只切換日期，讀取該日原有紀錄。');
+      const sourceFields = {...dailyJournal[sourceDate]?.fields};
+      const sourceCalories = JSON.parse(JSON.stringify(mealCalories[sourceDate] || {}));
+      loadJournalDate(date);
+      if (carry) {
+        MEAL_FIELDS.forEach(id => { getRequiredElement(id).value = sourceFields[id] || '無'; });
+        mealCalories[date] = sourceCalories;
+        saveMealCalories(); saveReportFields(); updateReportText();
+      }
+      renderPeriodCalendar(); renderJournal();
     }
     function bindReportFields() {
       document.querySelectorAll('[data-report-field]').forEach(field => {
@@ -1104,11 +1124,12 @@
       return latest.end && date > latest.end ? '生理期後第' + (periodDayNumber(date) - periodDayNumber(latest.end)) + '天' : '生理期第' + (periodDayNumber(date) - periodDayNumber(latest.start) + 1) + '天';
     }
     function syncPeriodNote() {
-      const field = getRequiredElement('bodyNote');
-      let text = field.value;
-      if (previousPeriodNote && (text === previousPeriodNote || text.startsWith(previousPeriodNote + '\n'))) text = text.slice(previousPeriodNote.length).replace(/^\n/,'');
+      const note = getRequiredElement('bodyNote');
+      // Move only the previously generated prefix; preserve the user's own notes.
+      if (previousPeriodNote && (note.value === previousPeriodNote || note.value.startsWith(previousPeriodNote + '\n'))) note.value = note.value.slice(previousPeriodNote.length).replace(/^\n/,'');
+      const field = getRequiredElement('periodNote');
       const next = periodNoteFor(getRequiredElement('reportDate').value);
-      field.value = [next, text].filter(Boolean).join('\n');
+      if (!field.value || field.value === previousPeriodNote) field.value = next;
       previousPeriodNote = next;
       appSetItem('foodPeriodAutoNote', next);
       saveReportFields(); updateReportText();
@@ -1124,7 +1145,7 @@
       const next = periods.filter(p => p.id !== editingPeriodId).concat({ id: editingPeriodId || crypto.randomUUID(), start, end });
       try { appSetItem(PERIOD_KEY,JSON.stringify(next)); } catch(e) { status.textContent = '儲存失敗，請確認瀏覽器允許儲存。'; return; }
       periods = next; periodMonth = new Date(start + 'T00:00:00'); periodMonth.setDate(1);
-      resetPeriodEditor(); renderPeriods(); syncPeriodNote(); status.textContent = '已儲存，日誌備註已更新。';
+      resetPeriodEditor(); renderPeriods(); syncPeriodNote(); status.textContent = '已儲存，生理期欄位已更新。';
     }
     function localDateText(date) { return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0'); }
     function movePeriodMonth(amount) { periodMonth = new Date(periodMonth.getFullYear(),periodMonth.getMonth()+amount,1); renderPeriodCalendar(); }
@@ -1146,7 +1167,7 @@
         if (predicted) button.classList.add('predicted-day');
         if (value === getRequiredElement('reportDate').value) button.classList.add('selected-day');
         button.setAttribute('aria-label', value + (active ? '，生理期' : '') + (predicted ? '，預估開始日' : '') + '，開啟日誌');
-        button.onclick = () => { switchReportDate(value); showPage('record'); getRequiredElement('bodyNote').focus(); };
+        button.onclick = () => { switchReportDate(value); showPage('record'); getRequiredElement('periodNote').focus(); };
         calendar.append(button);
       }
     }

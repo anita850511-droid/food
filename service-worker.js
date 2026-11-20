@@ -1,4 +1,4 @@
-const CACHE_NAME = "food-tracker-v6";
+const CACHE_NAME = "food-tracker-v7";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg", "./app-icon.png", "./drive-sync.js", "./GOOGLE-DRIVE-SETUP.md"];
 
 self.addEventListener("install", event => {
